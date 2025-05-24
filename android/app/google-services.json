@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "109677121478",
+    "project_id": "fixpro-e07b3",
+    "storage_bucket": "fixpro-e07b3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:109677121478:android:45a07023322e0779432cc7",
+        "android_client_info": {
+          "package_name": "com.example.FixUpProApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0ZU0_ESGP82mJLPxYxLppf-q0PFK1E9k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
