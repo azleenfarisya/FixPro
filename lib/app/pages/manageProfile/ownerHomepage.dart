@@ -13,18 +13,16 @@ class OwnerHomePage extends StatelessWidget {
     Navigator.pushNamed(context, '/profile');
   }
 
+  void _navigateToRate(BuildContext context) {
+    Navigator.pushNamed(context, '/rate');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            // Future enhancement: Add drawer or menu actions here
-          },
-        ),
         title: const Text('Owner Home'),
         actions: [
           PopupMenuButton<String>(
@@ -42,6 +40,35 @@ class OwnerHomePage extends StatelessWidget {
             ],
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
+              onTap: () => _navigateToProfile(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.star),
+              title: const Text('Rate'),
+              onTap: () => _navigateToRate(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign Out'),
+              onTap: () => _logout(context),
+            ),
+          ],
+        ),
       ),
       body: const Center(
         child: Text(

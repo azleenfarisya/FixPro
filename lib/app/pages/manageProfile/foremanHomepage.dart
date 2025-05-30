@@ -13,18 +13,16 @@ class ForemanHomePage extends StatelessWidget {
     Navigator.pushNamed(context, '/profile');
   }
 
+  void _navigateToRating(BuildContext context) {
+    Navigator.pushNamed(context, '/rating');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.brown[50],
       appBar: AppBar(
         backgroundColor: Colors.brown,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            // Future enhancement: Add drawer or menu actions here
-          },
-        ),
         title: const Text('Foreman Home'),
         actions: [
           PopupMenuButton<String>(
@@ -42,6 +40,35 @@ class ForemanHomePage extends StatelessWidget {
             ],
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.brown),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
+              onTap: () => _navigateToProfile(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.star),
+              title: const Text('Rating'),
+              onTap: () => _navigateToRating(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign Out'),
+              onTap: () => _logout(context),
+            ),
+          ],
+        ),
       ),
       body: const Center(
         child: Text(

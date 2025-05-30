@@ -13,6 +13,12 @@ class _ProfilePageState extends State<ProfilePage> {
   String? name;
   String? email;
   String? role;
+  String? phone;
+  String? address;
+  String? icNumber;
+  String? gender;
+  String? profileImageUrl;
+
   bool isLoading = true;
 
   Future<void> _loadUserData() async {
@@ -20,10 +26,16 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       if (doc.exists) {
+        final data = doc.data()!;
         setState(() {
-          name = doc['name'];
-          email = doc['email'];
-          role = doc['role'];
+          name = data['name'];
+          email = data['email'];
+          role = data['role'];
+          phone = data['phone'];
+          address = data['address'];
+          icNumber = data['icNumber'];
+          gender = data['gender'];
+          profileImageUrl = data['profileImageUrl'];
           isLoading = false;
         });
       }
@@ -35,6 +47,10 @@ class _ProfilePageState extends State<ProfilePage> {
     if (mounted) {
       Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     }
+  }
+
+  void _navigateToEditProfile() {
+    Navigator.pushNamed(context, '/editProfile');
   }
 
   @override
@@ -84,31 +100,61 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: roleColor.withOpacity(0.1),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
                   Center(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: roleColor,
-                      child: const Icon(Icons.person, size: 50, color: Colors.white),
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: roleColor,
+                          backgroundImage: (profileImageUrl != null && profileImageUrl!.isNotEmpty)
+                              ? NetworkImage(profileImageUrl!)
+                              : null,
+                          child: (profileImageUrl == null || profileImageUrl!.isEmpty)
+                              ? const Icon(Icons.person, size: 50, color: Colors.white)
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _navigateToEditProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: roleColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                          child: const Text('Edit Profile'),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 30),
-                  Text("Name", style: TextStyle(fontWeight: FontWeight.bold, color: roleColor)),
-                  Text(name ?? '', style: const TextStyle(fontSize: 18)),
-                  const SizedBox(height: 15),
-                  Text("Email", style: TextStyle(fontWeight: FontWeight.bold, color: roleColor)),
-                  Text(email ?? '', style: const TextStyle(fontSize: 18)),
-                  const SizedBox(height: 15),
-                  Text("Role", style: TextStyle(fontWeight: FontWeight.bold, color: roleColor)),
-                  Text(role ?? '', style: const TextStyle(fontSize: 18)),
+                  _buildField("Name", name, roleColor),
+                  _buildField("Email", email, roleColor),
+                  _buildField("Phone Number", phone, roleColor),
+                  _buildField("IC Number", icNumber, roleColor),
+                  _buildField("Address", address, roleColor),
+                  _buildField("Gender", gender, roleColor),
+                  _buildField("Role", role, roleColor),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildField(String label, String? value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+          Text(value ?? '-', style: const TextStyle(fontSize: 18)),
+        ],
+      ),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'app/pages/manageRegistration/registerInterface.dart';
 import 'app/pages/manageProfile/ownerHomepage.dart';      
 import 'app/pages/manageProfile/foremanHomepage.dart';
 import 'app/pages/manageProfile/profileInterface.dart';
+import 'app/pages/manageProfile/editProfile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +34,7 @@ class FixUpProApp extends StatelessWidget {
         '/ownerHome': (context) => const OwnerHomePage(),    // Role: Owner
         '/foremanHome': (context) => const ForemanHomePage(),// Role: Foreman
         '/profile': (context) => const ProfilePage(),
+        '/editProfile': (context) => const EditProfilePage(),
       },
     );
   }
