@@ -1,47 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../services/inventory_service.dart';
-import '../../theme/app_theme.dart';
 
-class AddPartsPage extends StatefulWidget {
-  const AddPartsPage({super.key});
+class EditPartsPage extends StatefulWidget {
+  final Map<String, dynamic> item;
+
+  const EditPartsPage({
+    super.key,
+    required this.item,
+  });
 
   @override
-  State<AddPartsPage> createState() => _AddPartsPageState();
+  State<EditPartsPage> createState() => _EditPartsPageState();
 }
 
-class _AddPartsPageState extends State<AddPartsPage> {
+class _EditPartsPageState extends State<EditPartsPage> {
   final _formKey = GlobalKey<FormState>();
-  final _inventoryService = InventoryService();
-  final _storage = FirebaseStorage.instance;
-  final _imagePicker = ImagePicker();
-
-  final _nameController = TextEditingController();
   final _brandController = TextEditingController();
   final _modelController = TextEditingController();
   final _priceController = TextEditingController();
-  final _quantityController = TextEditingController(text: '1');
+  final _quantityController = TextEditingController();
+  final _inventoryService = InventoryService();
+  final _storage = FirebaseStorage.instance;
+  final _picker = ImagePicker();
 
   String? _selectedCategory;
-  File? _imageFile;
   bool _isLoading = false;
+  File? _imageFile;
+  String? _imageUrl;
 
   final List<String> _categories = [
-    'Tires',
-    'Brake Disc',
     'Engine Parts',
+    'Brake System',
     'Suspension',
     'Electrical',
     'Body Parts',
-    'Accessories',
+    'Interior',
+    'Other',
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with existing values
+    _brandController.text = widget.item['brand'] ?? '';
+    _modelController.text = widget.item['model'] ?? '';
+    _priceController.text = widget.item['price']?.toString() ?? '';
+    _quantityController.text = widget.item['quantity']?.toString() ?? '';
+    _imageUrl = widget.item['imageUrl'];
+
+    // Ensure the category exists in the list, otherwise default to 'Other'
+    final itemCategory = widget.item['category'] as String?;
+    if (itemCategory != null && _categories.contains(itemCategory)) {
+      _selectedCategory = itemCategory;
+    } else {
+      _selectedCategory = 'Other';
+    }
+  }
+
+  @override
   void dispose() {
-    _nameController.dispose();
     _brandController.dispose();
     _modelController.dispose();
     _priceController.dispose();
@@ -51,27 +73,21 @@ class _AddPartsPageState extends State<AddPartsPage> {
 
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
-
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         setState(() {
           _imageFile = File(pickedFile.path);
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
     }
   }
 
   Future<String?> _uploadImage() async {
-    if (_imageFile == null) return null;
+    if (_imageFile == null) return _imageUrl;
 
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -84,7 +100,7 @@ class _AddPartsPageState extends State<AddPartsPage> {
       return await ref.getDownloadURL();
     } catch (e) {
       print('Error uploading image: $e');
-      return null;
+      return _imageUrl;
     }
   }
 
@@ -115,9 +131,9 @@ class _AddPartsPageState extends State<AddPartsPage> {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a category')),
+      );
       return;
     }
 
@@ -126,29 +142,29 @@ class _AddPartsPageState extends State<AddPartsPage> {
     });
 
     try {
-      final imageUrl = await _uploadImage();
+      final newImageUrl = await _uploadImage();
 
-      await _inventoryService.addInventoryItem(
-        name: _nameController.text,
+      await _inventoryService.updateInventoryItem(
+        itemId: widget.item['id'],
         brand: _brandController.text,
         model: _modelController.text,
         category: _selectedCategory!,
         price: double.parse(_priceController.text),
         quantity: int.parse(_quantityController.text),
-        imageUrl: imageUrl,
+        imageUrl: newImageUrl,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Part added successfully')),
+          const SnackBar(content: Text('Item updated successfully')),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error adding part: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating item: $e')),
+        );
       }
     } finally {
       if (mounted) {
@@ -162,7 +178,58 @@ class _AddPartsPageState extends State<AddPartsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Parts')),
+      appBar: AppBar(
+        title: const Text('Edit Part'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Confirm Delete'),
+                  content: const Text(
+                    'Are you sure you want to delete this item?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                try {
+                  await _inventoryService
+                      .deleteInventoryItem(widget.item['id']);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Item deleted successfully'),
+                      ),
+                    );
+                    Navigator.pop(context); // Return to previous screen
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error deleting item: $e'),
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -179,17 +246,21 @@ class _AddPartsPageState extends State<AddPartsPage> {
                         height: 200,
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: _imageFile != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.file(
-                                  _imageFile!,
+                          borderRadius: BorderRadius.circular(8),
+                          image: _imageFile != null
+                              ? DecorationImage(
+                                  image: FileImage(_imageFile!),
                                   fit: BoxFit.cover,
-                                ),
-                              )
-                            : const Center(
+                                )
+                              : _imageUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(_imageUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                        ),
+                        child: _imageFile == null && _imageUrl == null
+                            ? const Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -200,12 +271,16 @@ class _AddPartsPageState extends State<AddPartsPage> {
                                     ),
                                     SizedBox(height: 8),
                                     Text(
-                                      'Add Image',
-                                      style: TextStyle(color: Colors.grey),
+                                      'Tap to add image',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ),
+                              )
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -217,19 +292,19 @@ class _AddPartsPageState extends State<AddPartsPage> {
                         labelText: 'Category',
                         border: OutlineInputBorder(),
                       ),
-                      items: _categories.map((category) {
-                        return DropdownMenuItem(
+                      items: _categories.map((String category) {
+                        return DropdownMenuItem<String>(
                           value: category,
                           child: Text(category),
                         );
                       }).toList(),
-                      onChanged: (value) {
+                      onChanged: (String? newValue) {
                         setState(() {
-                          _selectedCategory = value;
+                          _selectedCategory = newValue;
                         });
                       },
                       validator: (value) {
-                        if (value == null) {
+                        if (value == null || value.isEmpty) {
                           return 'Please select a category';
                         }
                         return null;
@@ -337,7 +412,7 @@ class _AddPartsPageState extends State<AddPartsPage> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('Add Part'),
+                      child: const Text('Update Part'),
                     ),
                   ],
                 ),
