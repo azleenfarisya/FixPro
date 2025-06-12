@@ -29,11 +29,10 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
-      final doc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (doc.exists) {
         setState(() {
           name = doc.data()?['name'];
@@ -73,7 +72,8 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
       data: AppTheme.getTheme('Owner'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Workshop Owner Dashboard'),
+          title: const Text('FixUp Pro'),
+          centerTitle: true,
           actions: [
             IconButton(
               icon: const Icon(Icons.account_circle),

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/inventory_service.dart';
-import '../../theme/app_theme.dart';
 import 'addParts.dart';
 import 'importParts.dart';
 import 'editParts.dart';
@@ -18,6 +15,8 @@ class _InventoryListPageState extends State<InventoryListPage> {
   final _searchController = TextEditingController();
   final _inventoryService = InventoryService();
   String _searchQuery = '';
+  String _selectedCategoryFilter =
+      'All'; // New state variable for selected filter
 
   @override
   void dispose() {
@@ -28,69 +27,98 @@ class _InventoryListPageState extends State<InventoryListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inventory Management'),
-        automaticallyImplyLeading: false,
-      ),
+      backgroundColor: const Color(0xFFC7E3F4), // Light blue background
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search inventory...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+          Container(
+            width: double.infinity, // Make the container span full width
+            decoration: const BoxDecoration(
+              color: Colors.white, // White background
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.only(
+                top: 16.0, bottom: 8.0), // Adjust padding as needed
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ImportPartsPage(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0), // Re-add horizontal padding
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Parts & Stock',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.import_export),
-                  label: const Text('Import Parts'),
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ImportPartsPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.import_export,
+                                color: Colors.blue), // Icon color
+                            label: const Text('Import Parts',
+                                style: TextStyle(
+                                    color: Colors.blue)), // Text color
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                  color: Colors.blue), // Border color
+                            ),
+                          ),
+                          const SizedBox(
+                              width: 8), // Add some space between buttons
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AddPartsPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.add, color: Colors.white),
+                            label: const Text('Add Parts',
+                                style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green, // Green background
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddPartsPage(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Parts'),
+                // Category filter buttons
+                const SizedBox(height: 16), // Space between buttons and filters
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0), // Re-add horizontal padding
+                  child: Row(
+                    children: [
+                      _buildFilterButton('All'),
+                      _buildFilterButton('Tires'),
+                      _buildFilterButton('Brake disc'),
+                      _buildFilterButton('Engine'),
+                      _buildFilterButton('Suspension'),
+                      _buildFilterButton('Electrical'),
+                      _buildFilterButton('Body parts'),
+                      _buildFilterButton('Accessories'),
+                      _buildFilterButton('Oil filer'),
+                      _buildFilterButton('Throttle'),
+                      _buildFilterButton('Fuel tank'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -109,25 +137,25 @@ class _InventoryListPageState extends State<InventoryListPage> {
 
                 final items = snapshot.data ?? [];
                 if (items.isEmpty) {
-                  return Center(
+                  return const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.inventory_2,
                           size: 64,
                           color: Colors.grey,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: 16),
+                        Text(
                           'No inventory items found',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
+                        SizedBox(height: 8),
+                        Text(
                           'Click Add Parts or Import Parts to add inventory',
                           style: TextStyle(color: Colors.grey),
                         ),
@@ -142,11 +170,16 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         final name = item['name'].toString().toLowerCase();
                         final brand = item['brand'].toString().toLowerCase();
                         final model = item['model'].toString().toLowerCase();
+                        final category = item['category']
+                            .toString()
+                            .toLowerCase(); // Include category in search
                         final searchQuery = _searchQuery.toLowerCase();
 
                         return name.contains(searchQuery) ||
                             brand.contains(searchQuery) ||
-                            model.contains(searchQuery);
+                            model.contains(searchQuery) ||
+                            category
+                                .contains(searchQuery); // Search by category
                       }).toList();
 
                 if (filteredItems.isEmpty) {
@@ -155,78 +188,233 @@ class _InventoryListPageState extends State<InventoryListPage> {
                   );
                 }
 
+                // Group items by category
+                final Map<String, List<Map<String, dynamic>>> itemsByCategory =
+                    {};
+                for (var item in filteredItems) {
+                  final category = item['category'] as String;
+                  final standardizedCategory =
+                      _inventoryService.standardizeCategory(
+                          category); // Standardize for grouping
+                  if (!itemsByCategory.containsKey(standardizedCategory)) {
+                    itemsByCategory[standardizedCategory] = [];
+                  }
+                  itemsByCategory[standardizedCategory]!.add(item);
+                }
+
+                // Build the list of sections
                 return ListView.builder(
-                  itemCount: filteredItems.length,
-                  itemBuilder: (context, index) {
-                    final item = filteredItems[index];
-                    return Stack(
+                  itemCount: itemsByCategory.keys.length,
+                  itemBuilder: (context, sectionIndex) {
+                    final category =
+                        itemsByCategory.keys.elementAt(sectionIndex);
+                    final categoryItems = itemsByCategory[category]!;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Card(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8.0,
-                          ),
-                          child: ListTile(
-                            leading: item['imageUrl'] != null
-                                ? Image.network(
-                                    item['imageUrl'],
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error);
-                                    },
-                                  )
-                                : const Icon(Icons.image),
-                            title: Text('${item['brand']} ${item['model']}'),
-                            subtitle: Text(
-                              'Category: ${item['category']}\n'
-                              'Price: RM ${item['price'].toStringAsFixed(2)}\n'
-                              'Quantity: ${item['quantity']}',
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategoryFilter = category;
+                              _searchQuery = _inventoryService
+                                  .standardizeCategory(category);
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
+                            child: Row(
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => EditPartsPage(
-                                          item: item,
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                Text(
+                                  _inventoryService
+                                      .standardizeCategory(category),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.arrow_forward_ios, size: 16),
                               ],
                             ),
                           ),
                         ),
-                        if (item['source'] == 'Import')
-                          Positioned(
-                            top: 0,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Import',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                        SizedBox(
+                          height:
+                              250, // Fixed height for horizontal scrollable grid
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categoryItems.length,
+                            itemBuilder: (context, itemIndex) {
+                              final item = categoryItems[itemIndex];
+                              return Stack(
+                                children: [
+                                  Container(
+                                    width: 180, // Fixed width for each card
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 8.0),
+                                    child: Card(
+                                      elevation: 2, // Add some shadow
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            if (item['imageUrl'] != null)
+                                              Expanded(
+                                                child: Center(
+                                                  child: Container(
+                                                    width: 150,
+                                                    height: 150,
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                          color: Colors
+                                                              .grey.shade300),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      child: Image.network(
+                                                        item['imageUrl'],
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder: (context,
+                                                            error, stackTrace) {
+                                                          print(
+                                                              'Error loading image: $error');
+                                                          return const Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              size: 50);
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            else
+                                              const Expanded(
+                                                child: Center(
+                                                  child: Icon(Icons.image,
+                                                      size: 50,
+                                                      color: Colors.grey),
+                                                ),
+                                              ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              item['brand'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            Text(
+                                              item['model'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            Text(
+                                              item['name'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              'RM${item['price']?.toStringAsFixed(2) ?? '0.00'}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              'QTY: ${item['quantity'] ?? 0}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                                height:
+                                                    8), // Add small spacing before button
+                                            SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          EditPartsPage(
+                                                              item: item),
+                                                    ),
+                                                  );
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors
+                                                      .orange, // Orange background
+                                                  foregroundColor: Colors
+                                                      .white, // White text
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5), // Slightly rounded corners
+                                                  ),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 8),
+                                                ),
+                                                child: const Text('Edit'),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (item['source'] == 'Import')
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors
+                                              .blue, // Blue tag for imported
+                                          borderRadius: BorderRadius.circular(
+                                              5), // Rounded corners
+                                        ),
+                                        child: const Text(
+                                          'Import',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
+                        ),
                       ],
                     );
                   },
@@ -235,6 +423,47 @@ class _InventoryListPageState extends State<InventoryListPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(String text) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8.0),
+      child: OutlinedButton(
+        onPressed: () {
+          setState(() {
+            _selectedCategoryFilter = text; // Update selected category
+            if (text == 'All') {
+              _searchQuery = ''; // Clear search query for 'All'
+            } else {
+              _searchQuery = _inventoryService
+                  .standardizeCategory(text); // Standardize category for filter
+            }
+          });
+        },
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+              color: _selectedCategoryFilter == text
+                  ? Colors.blue
+                  : Colors.grey), // Conditional border color
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(20), // Rounded corners for pill shape
+          ),
+          backgroundColor: _selectedCategoryFilter == text
+              ? Colors.blue
+              : Colors.transparent, // Conditional background color
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        ),
+        child: Text(
+          _inventoryService
+              .standardizeCategory(text), // Standardize category for display
+          style: TextStyle(
+              color: _selectedCategoryFilter == text
+                  ? Colors.white
+                  : Colors.black), // Conditional text color
+        ),
       ),
     );
   }

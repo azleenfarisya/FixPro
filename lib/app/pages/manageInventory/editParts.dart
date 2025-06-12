@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -34,13 +33,16 @@ class _EditPartsPageState extends State<EditPartsPage> {
   String? _imageUrl;
 
   final List<String> _categories = [
-    'Engine Parts',
-    'Brake System',
+    'Tires',
+    'Brake disc',
+    'Engine',
     'Suspension',
     'Electrical',
-    'Body Parts',
-    'Interior',
-    'Other',
+    'Body parts',
+    'Accessories',
+    'Oil filer',
+    'Throttle',
+    'Fuel tank',
   ];
 
   @override
@@ -53,12 +55,14 @@ class _EditPartsPageState extends State<EditPartsPage> {
     _quantityController.text = widget.item['quantity']?.toString() ?? '';
     _imageUrl = widget.item['imageUrl'];
 
-    // Ensure the category exists in the list, otherwise default to 'Other'
+    // Ensure the category exists in the list, otherwise default to first available category or null
     final itemCategory = widget.item['category'] as String?;
     if (itemCategory != null && _categories.contains(itemCategory)) {
       _selectedCategory = itemCategory;
+    } else if (_categories.isNotEmpty) {
+      _selectedCategory = _categories.first; // Default to the first category
     } else {
-      _selectedCategory = 'Other';
+      _selectedCategory = null; // No categories available
     }
   }
 
@@ -156,9 +160,12 @@ class _EditPartsPageState extends State<EditPartsPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Item updated successfully')),
+          const SnackBar(
+            content: Text('Stock updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -181,52 +188,66 @@ class _EditPartsPageState extends State<EditPartsPage> {
       appBar: AppBar(
         title: const Text('Edit Part'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Confirm Delete'),
-                  content: const Text(
-                    'Are you sure you want to delete this item?',
+          Padding(
+            padding: const EdgeInsets.only(
+                right: 8.0), // Adjust right padding to move left
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirm Delete'),
+                    content: const Text(
+                      'Are you sure you want to delete this item?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Yes'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
-              );
+                );
 
-              if (confirm == true) {
-                try {
-                  await _inventoryService
-                      .deleteInventoryItem(widget.item['id']);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Item deleted successfully'),
-                      ),
-                    );
-                    Navigator.pop(context); // Return to previous screen
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error deleting item: $e'),
-                      ),
-                    );
+                if (confirm == true) {
+                  try {
+                    await _inventoryService
+                        .deleteInventoryItem(widget.item['id']);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Item removed successfully!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      Navigator.pop(context); // Return to previous screen
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error deleting item: $e'),
+                        ),
+                      );
+                    }
                   }
                 }
-              }
-            },
+              },
+              icon: const Icon(Icons.delete, color: Colors.black),
+              label: const Text('Remove Item',
+                  style: TextStyle(color: Colors.black)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                elevation: 0, // No shadow
+                padding: EdgeInsets.zero, // Remove default padding
+                minimumSize: Size.zero, // Remove default minimum size
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ),
         ],
       ),
@@ -283,7 +304,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
                     // Category Dropdown
                     DropdownButtonFormField<String>(
@@ -292,119 +313,144 @@ class _EditPartsPageState extends State<EditPartsPage> {
                         labelText: 'Category',
                         border: OutlineInputBorder(),
                       ),
-                      items: _categories.map((String category) {
-                        return DropdownMenuItem<String>(
+                      items: _categories.map((category) {
+                        return DropdownMenuItem(
                           value: category,
                           child: Text(category),
                         );
                       }).toList(),
-                      onChanged: (String? newValue) {
+                      onChanged: (value) {
                         setState(() {
-                          _selectedCategory = newValue;
+                          _selectedCategory = value;
                         });
                       },
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null) {
                           return 'Please select a category';
                         }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                    // Brand
-                    TextFormField(
-                      controller: _brandController,
-                      decoration: const InputDecoration(
-                        labelText: 'Brand',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a brand';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Model
-                    TextFormField(
-                      controller: _modelController,
-                      decoration: const InputDecoration(
-                        labelText: 'Model',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a model';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Price
-                    TextFormField(
-                      controller: _priceController,
-                      decoration: const InputDecoration(
-                        labelText: 'Price (RM)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a price';
-                        }
-                        if (double.tryParse(value) == null) {
-                          return 'Please enter a valid price';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Quantity
-                    TextFormField(
-                      controller: _quantityController,
-                      decoration: InputDecoration(
-                        labelText: 'Quantity',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.keyboard_arrow_up),
-                              onPressed: _incrementQuantity,
-                              style: IconButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(20, 20),
-                              ),
+                    // Brand & Model Name
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _brandController,
+                            decoration: const InputDecoration(
+                              labelText: 'Brand Name',
+                              hintText: 'Brembo, Galf...',
+                              border: OutlineInputBorder(),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                              onPressed: _decrementQuantity,
-                              style: IconButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(20, 20),
-                              ),
-                            ),
-                          ],
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Brand Name cannot be empty';
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: _validateAndUpdateQuantity,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a quantity';
-                        }
-                        if (int.tryParse(value) == null) {
-                          return 'Please enter a valid quantity';
-                        }
-                        return null;
-                      },
+                        const SizedBox(
+                            width: 8), // Space between brand and model
+                        Expanded(
+                          child: TextFormField(
+                            controller: _modelController,
+                            decoration: const InputDecoration(
+                              labelText: 'Model Name',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Model Name cannot be empty';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
+
+                    // Quantity and Price
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _quantityController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Quantity',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GestureDetector(
+                                    onTap: _incrementQuantity,
+                                    child: const Icon(Icons.arrow_drop_up),
+                                  ),
+                                  GestureDetector(
+                                    onTap: _decrementQuantity,
+                                    child: const Icon(Icons.arrow_drop_down),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            onChanged: _validateAndUpdateQuantity,
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  int.tryParse(value)! <= 0) {
+                                return 'Quantity cannot be negative value!';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(
+                            width: 8), // Space between quantity and price
+                        Expanded(
+                          child: TextFormField(
+                            controller: _priceController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Price(RM)',
+                              prefixText: 'RM ',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  double.tryParse(value)! <= 0) {
+                                return 'Price cannot be equal or lower than 0!';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Cancel Button
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context)
+                            .pop(); // Go back to the previous page
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.red, // Red background fill
+                        side: const BorderSide(color: Colors.red), // Red border
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                            color: Colors.white), // White text for contrast
+                      ),
+                    ),
+                    const SizedBox(height: 16), // Spacing between buttons
 
                     // Submit Button
                     ElevatedButton(
@@ -412,7 +458,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('Update Part'),
+                      child: const Text('Save'),
                     ),
                   ],
                 ),

@@ -28,11 +28,10 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
-      final doc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (doc.exists) {
         setState(() {
           name = doc.data()?['name'];
@@ -72,7 +71,8 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
       data: AppTheme.getTheme('Foreman'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Foreman Dashboard'),
+          title: const Text('FixUp Pro'),
+          centerTitle: true,
           actions: [
             IconButton(
               icon: const Icon(Icons.account_circle),

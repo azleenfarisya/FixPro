@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../theme/app_theme.dart';
 
 class OrderPage extends StatefulWidget {
   final Map<String, dynamic> part;
@@ -47,8 +46,11 @@ class _OrderPageState extends State<OrderPage> {
         throw Exception('User not authenticated');
       }
 
+      print('Part data: ${widget.part}'); // Debug log
+      print('Image URL: ${widget.part['imageUrl']}'); // Debug log
+
       await _firestore.collection('import_requests').add({
-        'workshopId': currentUser.uid,
+        'requestingWorkshopId': currentUser.uid,
         'supplierWorkshopId': widget.workshopId,
         'supplierWorkshopName': widget.workshopName,
         'partId': widget.part['id'],
@@ -59,6 +61,7 @@ class _OrderPageState extends State<OrderPage> {
         'price': widget.part['price'],
         'quantity': _quantity,
         'totalAmount': _totalAmount,
+        'imageUrl': widget.part['imageUrl'],
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -66,7 +69,10 @@ class _OrderPageState extends State<OrderPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order request sent successfully')),
+          const SnackBar(
+            content: Text('Request made and sent to the supplier!'),
+            backgroundColor: Colors.green,
+          ),
         );
         Navigator.pop(context, true); // Return true to indicate success
       }
@@ -83,23 +89,23 @@ class _OrderPageState extends State<OrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Order Part'),
+        title: Text(widget.part['category'] ?? 'Order Part'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Workshop Details
+            // Part Details (consolidated)
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Workshop Details',
-                      style: TextStyle(
+                    Text(
+                      widget.part['category'] ?? 'Unknown Category',
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -107,35 +113,65 @@ class _OrderPageState extends State<OrderPage> {
                     const SizedBox(height: 8),
                     Text(
                       widget.workshopName,
-                      style: const TextStyle(fontSize: 16),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Part Details
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Part Details',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    Text(
+                      widget.part['address'] ?? 'No address',
+                      style: const TextStyle(
+                        color: Colors.grey,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text('Name: ${widget.part['name']}'),
-                    Text('Brand: ${widget.part['brand']}'),
-                    Text('Model: ${widget.part['model']}'),
-                    Text('Category: ${widget.part['category']}'),
+                    if (widget.part['imageUrl'] != null)
+                      Center(
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              widget.part['imageUrl'],
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Error loading network image: $error');
+                                return const Icon(Icons.broken_image, size: 50);
+                              },
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Center(
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.image,
+                              size: 50, color: Colors.grey),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Text('${widget.part['name'] ?? 'Unknown Part'}'),
+                    Text('Brand: ${widget.part['brand'] ?? 'N/A'}'),
+                    Text('Model: ${widget.part['model'] ?? 'N/A'}'),
                     Text(
                       'Price: RM${widget.part['price'].toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Quantity: ${widget.part['quantity'] ?? 0}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -156,11 +192,11 @@ class _OrderPageState extends State<OrderPage> {
                     const Text(
                       'Quantity',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -168,18 +204,59 @@ class _OrderPageState extends State<OrderPage> {
                           icon: const Icon(Icons.remove),
                           onPressed: () => _updateQuantity(_quantity - 1),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _quantity.toString(),
-                            style: const TextStyle(fontSize: 16),
+                        SizedBox(
+                          width:
+                              60, // Slightly reduced width for quantity input
+                          child: TextFormField(
+                            controller: TextEditingController(
+                                text: _quantity.toString()),
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 6), // Reduced padding
+                            ),
+                            onChanged: (value) {
+                              int? newQuantity = int.tryParse(value);
+                              if (newQuantity != null &&
+                                  newQuantity >= 1 &&
+                                  newQuantity <=
+                                      (widget.part['quantity'] ?? 0)) {
+                                setState(() {
+                                  _quantity = newQuantity;
+                                  _totalAmount =
+                                      widget.part['price'] * _quantity;
+                                });
+                              } else if (newQuantity != null &&
+                                  newQuantity < 1) {
+                                setState(() {
+                                  _quantity = 1;
+                                  _totalAmount =
+                                      widget.part['price'] * _quantity;
+                                });
+                                // Optionally show a snackbar for invalid input
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Quantity cannot be less than 1')),
+                                );
+                              } else if (newQuantity != null &&
+                                  newQuantity >
+                                      (widget.part['quantity'] ?? 0)) {
+                                setState(() {
+                                  _quantity = (widget.part['quantity'] ?? 0);
+                                  _totalAmount =
+                                      widget.part['price'] * _quantity;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Quantity cannot exceed available stock (${widget.part['quantity'] ?? 0})')),
+                                );
+                              }
+                            },
                           ),
                         ),
                         IconButton(
@@ -188,7 +265,7 @@ class _OrderPageState extends State<OrderPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'Available: ${widget.part['quantity']}',
                       style: const TextStyle(
@@ -199,61 +276,77 @@ class _OrderPageState extends State<OrderPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             // Total Amount
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Total Amount:',
+                      'Total Amount',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      'RM${_totalAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'RM${_totalAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Cancel'),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Go back to the previous page
+                },
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.red, // Red background fill
+                  side: const BorderSide(color: Colors.red), // Red border
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _submitOrder,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Send Request'),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12), // Spacing between buttons
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _submitOrder,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-              ],
+                child: const Text(
+                  'Send Request Order',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
             ),
           ],
         ),

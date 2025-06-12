@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../theme/app_theme.dart';
 import 'findWorkshop.dart';
+import 'detailsImportRequestPage.dart';
 
 class ImportPartsPage extends StatefulWidget {
   const ImportPartsPage({super.key});
@@ -47,7 +47,7 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search parts...',
+                hintText: 'Search',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -64,7 +64,8 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
                   .collection('import_requests')
-                  .where('workshopId', isEqualTo: _auth.currentUser?.uid)
+                  .where('requestingWorkshopId',
+                      isEqualTo: _auth.currentUser?.uid)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -112,25 +113,25 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                       }).toList();
 
                 if (filteredRequests.isEmpty) {
-                  return Center(
+                  return const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.inventory_2_outlined,
                           size: 64,
                           color: Colors.grey,
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: 16),
+                        Text(
                           'No import requests found',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
+                        SizedBox(height: 8),
+                        Text(
                           'Your requests will appear here',
                           style: TextStyle(color: Colors.grey),
                         ),
@@ -168,8 +169,15 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                         vertical: 8.0,
                       ),
                       child: InkWell(
-                        onTap: () =>
-                            _showRequestDetails(context, requestId, request),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailsImportRequestPage(
+                              requestId: requestId,
+                              request: request,
+                            ),
+                          ),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -185,7 +193,8 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          request['partName'] ?? 'Unknown Part',
+                                          request['category'] ??
+                                              'Unknown Category',
                                           style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
@@ -211,7 +220,9 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                                           ? Colors.orange
                                           : status == 'approved'
                                               ? Colors.green
-                                              : Colors.red,
+                                              : status == 'cancelled'
+                                                  ? Colors.grey
+                                                  : Colors.red,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -225,6 +236,26 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                                 ],
                               ),
                               const SizedBox(height: 16),
+                              if (request['imageUrl'] != null)
+                                Center(
+                                  child: Image.network(
+                                    request['imageUrl'],
+                                    height: 100,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print(
+                                          'Error loading network image: $error');
+                                      return const Icon(Icons.broken_image,
+                                          size: 50);
+                                    },
+                                  ),
+                                )
+                              else
+                                const Center(
+                                  child: Icon(Icons.image,
+                                      size: 100, color: Colors.grey),
+                                ),
+                              const SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -235,18 +266,23 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                                     children: [
                                       Text('Brand: ${request['brand']}'),
                                       Text('Model: ${request['model']}'),
-                                      Text('Category: ${request['category']}'),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
+                                      Text(
+                                        'Price: RM${request['price']?.toStringAsFixed(2) ?? '0.00'} / unit',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                       Text(
                                         'Quantity: ${request['quantity']}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
                                       Text(
                                         'Total: RM${request['totalAmount']?.toStringAsFixed(2) ?? '0.00'}',
                                         style: const TextStyle(
@@ -276,85 +312,6 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showRequestDetails(BuildContext context, String requestId,
-      Map<String, dynamic> request) async {
-    final status = request['status'] as String? ?? 'pending';
-
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Request Details'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'From: ${request['supplierWorkshopName']}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Part Details',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text('Name: ${request['partName']}'),
-              Text('Brand: ${request['brand']}'),
-              Text('Model: ${request['model']}'),
-              Text('Category: ${request['category']}'),
-              const SizedBox(height: 16),
-              Text('Quantity: ${request['quantity']}'),
-              Text(
-                'Price per unit: RM${request['price']?.toStringAsFixed(2) ?? '0.00'}',
-              ),
-              Text(
-                'Total: RM${request['totalAmount']?.toStringAsFixed(2) ?? '0.00'}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Status: ${status.toUpperCase()}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: status == 'pending'
-                      ? Colors.orange
-                      : status == 'approved'
-                          ? Colors.green
-                          : Colors.red,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          if (status == 'pending')
-            ElevatedButton(
-              onPressed: () {
-                _updateRequestStatus(requestId, 'approved');
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Approve'),
-            ),
         ],
       ),
     );

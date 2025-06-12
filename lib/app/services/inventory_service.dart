@@ -95,60 +95,43 @@ class InventoryService {
     required int quantity,
     String? imageUrl,
   }) async {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) {
-      throw Exception('User not authenticated');
-    }
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) throw Exception('User not authenticated');
 
-    final workshopRef = _firestore.collection('workshops').doc(currentUser.uid);
+      final workshopRef = _firestore.collection('workshops').doc(userId);
+      final workshopDoc = await workshopRef.get();
 
-    // Get current workshop data
-    final workshopDoc = await workshopRef.get();
-    Map<String, dynamic> workshopData;
+      if (!workshopDoc.exists) {
+        throw Exception('Workshop not found');
+      }
 
-    if (!workshopDoc.exists) {
-      // Create new workshop document if it doesn't exist
-      workshopData = {
-        'name': 'My Workshop',
-        'location': 'Kuala Lumpur',
-        'ownerId': currentUser.uid,
-        'inventory': [],
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
+      final newItem = {
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'name': name,
+        'brand': brand,
+        'model': model,
+        'category': category,
+        'price': price,
+        'quantity': quantity,
+        'imageUrl': imageUrl,
+        'source': 'Manual',
+        'createdAt': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
       };
-      await workshopRef.set(workshopData);
-    } else {
-      workshopData = workshopDoc.data()!;
+
+      print('Adding new item to inventory: $newItem'); // Debug log
+
+      await workshopRef.update({
+        'inventory': FieldValue.arrayUnion([newItem]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('Inventory item added successfully'); // Debug log
+    } catch (e) {
+      print('Error adding inventory item: $e'); // Debug log
+      rethrow;
     }
-
-    // Get current inventory array
-    final inventory =
-        List<Map<String, dynamic>>.from(workshopData['inventory'] ?? []);
-
-    // Create new inventory item
-    final now = DateTime.now();
-    final newItem = {
-      'id': now.millisecondsSinceEpoch.toString(),
-      'name': name,
-      'brand': brand,
-      'model': model,
-      'category': category,
-      'price': price,
-      'quantity': quantity,
-      'imageUrl': imageUrl,
-      'source': 'Manual', // Mark as manually added
-      'createdAt': now.toIso8601String(),
-      'updatedAt': now.toIso8601String(),
-    };
-
-    // Add to inventory array
-    inventory.add(newItem);
-
-    // Update workshop document
-    await workshopRef.update({
-      'inventory': inventory,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
   }
 
   // Update inventory item
@@ -190,7 +173,10 @@ class InventoryService {
     if (name != null) updatedItem['name'] = name;
     if (brand != null) updatedItem['brand'] = brand;
     if (model != null) updatedItem['model'] = model;
-    if (category != null) updatedItem['category'] = category;
+    if (category != null) {
+      updatedItem['category'] =
+          standardizeCategory(category); // Use standardized category
+    }
     if (price != null) updatedItem['price'] = price;
     if (quantity != null) updatedItem['quantity'] = quantity;
     if (imageUrl != null) updatedItem['imageUrl'] = imageUrl;
@@ -248,6 +234,15 @@ class InventoryService {
       final userId = _auth.currentUser?.uid;
       if (userId == null) throw Exception('User not authenticated');
 
+      // Standardize categories for imported items
+      final standardizedItems = items.map((item) {
+        final category = item['category'] as String?;
+        if (category != null) {
+          item['category'] = standardizeCategory(category);
+        }
+        return item;
+      }).toList();
+
       // Get requesting workshop name
       final workshopDoc =
           await _firestore.collection('workshops').doc(userId).get();
@@ -258,7 +253,7 @@ class InventoryService {
         'requestingWorkshopName': workshopName,
         'targetWorkshopId': targetWorkshopId,
         'targetWorkshopName': targetWorkshopName,
-        'items': items,
+        'items': standardizedItems, // Use standardized items
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -317,5 +312,12 @@ class InventoryService {
     final snapshot = await uploadTask;
 
     return await snapshot.ref.getDownloadURL();
+  }
+
+  String standardizeCategory(String category) {
+    return category.split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 }
