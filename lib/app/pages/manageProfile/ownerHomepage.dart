@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../manageRegistration/firstPage.dart';
 import '../manageProfile/profileInterface.dart';
 import '../manageInventory/inventoryList.dart';
+import '../managePayment/paymentinterface.dart';
 import '../../theme/app_theme.dart';
 
 class OwnerHomePage extends StatefulWidget {
@@ -29,10 +30,11 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
       if (doc.exists) {
         setState(() {
           name = doc.data()?['name'];
@@ -72,8 +74,7 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
       data: AppTheme.getTheme('Owner'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('FixUp Pro'),
-          centerTitle: true,
+          title: const Text('Workshop Owner Dashboard'),
           actions: [
             IconButton(
               icon: const Icon(Icons.account_circle),
@@ -127,11 +128,20 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.star),
-                title: const Text('Rating'),
+                leading: const Icon(Icons.payment),
+                title: const Text('Payments'),
                 selected: _selectedIndex == 2,
                 onTap: () {
                   setState(() => _selectedIndex = 2);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star),
+                title: const Text('Rating'),
+                selected: _selectedIndex == 3,
+                onTap: () {
+                  setState(() => _selectedIndex = 3);
                   Navigator.pop(context);
                 },
               ),
@@ -149,6 +159,7 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
           children: const [
             Center(child: Text('Home')),
             InventoryListPage(),
+            PaymentInterface(),
             Center(child: Text('Rating')), // Placeholder for Rating page
           ],
         ),
@@ -158,6 +169,10 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory),
               label: 'Inventory',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.payment),
+              label: 'Payments',
             ),
             BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rating'),
           ],
