@@ -18,7 +18,18 @@ import 'app/pages/managePayment/addpayment.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    if (e.toString().contains('duplicate-app')) {
+      // Firebase is already initialized, we can ignore this error
+      print('Firebase already initialized');
+    } else {
+      // If it's a different error, we should rethrow it
+      rethrow;
+    }
+  }
   runApp(const FixUpProApp());
 }
 
@@ -40,8 +51,8 @@ class FixUpProApp extends StatelessWidget {
         '/foremanHome': (context) => const ForemanHomePage(), // Role: Foreman
         '/profile': (context) => const ProfilePage(),
         '/editProfile': (context) => const EditProfilePage(),
-        '/inventory':
-            (context) => const InventoryListPage(), // Inventory Management
+        '/inventory': (context) =>
+            const InventoryListPage(), // Inventory Management
         '/addParts': (context) => const AddPartsPage(), // Add Parts
         '/importParts': (context) => const ImportPartsPage(), // Import Parts
         '/findWorkshop': (context) => const FindWorkshopPage(), // Find Workshop

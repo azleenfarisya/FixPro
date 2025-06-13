@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import '../../services/inventory_service.dart';
 
 class EditPartsPage extends StatefulWidget {
@@ -24,12 +21,9 @@ class _EditPartsPageState extends State<EditPartsPage> {
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _inventoryService = InventoryService();
-  final _storage = FirebaseStorage.instance;
-  final _picker = ImagePicker();
 
   String? _selectedCategory;
   bool _isLoading = false;
-  File? _imageFile;
   String? _imageUrl;
 
   final List<String> _categories = [
@@ -45,6 +39,20 @@ class _EditPartsPageState extends State<EditPartsPage> {
     'Fuel tank',
   ];
 
+  // Map categories to their corresponding image assets
+  final Map<String, String> _categoryImages = {
+    'Tires': 'assets/images/Tire_Bridgestone.jpg',
+    'Brake disc': 'assets/images/BrakeDisc_Brembo.jpeg',
+    'Engine': 'assets/images/Engine_Toyota.jpg',
+    'Suspension': 'assets/images/Suspension_KYB.jpeg',
+    'Electrical': 'assets/images/Electrical_Bosch.jpg',
+    'Body parts': 'assets/images/BodyParts_Honda.jpg',
+    'Accessories': 'assets/images/Accessories_AutoGrip.png',
+    'Oil filer': 'assets/images/OilFilter_Mann.jpeg',
+    'Throttle': 'assets/images/Throttle_Siemens.png',
+    'Fuel tank': 'assets/images/FuelTank_Denso.png',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -59,10 +67,12 @@ class _EditPartsPageState extends State<EditPartsPage> {
     final itemCategory = widget.item['category'] as String?;
     if (itemCategory != null && _categories.contains(itemCategory)) {
       _selectedCategory = itemCategory;
+      _imageUrl = _categoryImages[itemCategory];
     } else if (_categories.isNotEmpty) {
-      _selectedCategory = _categories.first; // Default to the first category
+      _selectedCategory = _categories.first;
+      _imageUrl = _categoryImages[_categories.first];
     } else {
-      _selectedCategory = null; // No categories available
+      _selectedCategory = null;
     }
   }
 
@@ -75,36 +85,19 @@ class _EditPartsPageState extends State<EditPartsPage> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
-      );
+  // Add quantity validation functions
+  void _validateAndUpdateQuantity(String value) {
+    if (value.isEmpty) {
+      _quantityController.text = '1';
+      return;
     }
-  }
 
-  Future<String?> _uploadImage() async {
-    if (_imageFile == null) return _imageUrl;
-
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) throw Exception('User not authenticated');
-
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = _storage.ref().child('inventory/$userId/$fileName');
-
-      await ref.putFile(_imageFile!);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      print('Error uploading image: $e');
-      return _imageUrl;
+    // Only validate when the field loses focus or when submitting
+    if (!_quantityController.selection.isValid) {
+      final quantity = int.tryParse(value);
+      if (quantity == null || quantity <= 0) {
+        _quantityController.text = '1';
+      }
     }
   }
 
@@ -120,33 +113,16 @@ class _EditPartsPageState extends State<EditPartsPage> {
     }
   }
 
-  void _validateAndUpdateQuantity(String value) {
-    if (value.isEmpty) {
-      _quantityController.text = '1';
-      return;
-    }
-
-    final number = int.tryParse(value);
-    if (number == null || number < 1) {
-      _quantityController.text = '1';
-    }
-  }
-
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
-      return;
-    }
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final newImageUrl = await _uploadImage();
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) throw Exception('User not authenticated');
 
       await _inventoryService.updateInventoryItem(
         itemId: widget.item['id'],
@@ -155,7 +131,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
         category: _selectedCategory!,
         price: double.parse(_priceController.text),
         quantity: int.parse(_quantityController.text),
-        imageUrl: newImageUrl,
+        imageUrl: _imageUrl,
       );
 
       if (mounted) {
@@ -170,7 +146,10 @@ class _EditPartsPageState extends State<EditPartsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating item: $e')),
+          SnackBar(
+            content: Text('Error updating part: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -189,8 +168,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
         title: const Text('Edit Part'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(
-                right: 8.0), // Adjust right padding to move left
+            padding: const EdgeInsets.only(right: 8.0),
             child: ElevatedButton.icon(
               onPressed: () async {
                 final confirm = await showDialog<bool>(
@@ -213,24 +191,25 @@ class _EditPartsPageState extends State<EditPartsPage> {
                   ),
                 );
 
-                if (confirm == true) {
+                if (confirm == true && mounted) {
                   try {
                     await _inventoryService
                         .deleteInventoryItem(widget.item['id']);
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Item removed successfully!'),
+                          content: Text('Item deleted successfully!'),
                           backgroundColor: Colors.red,
                         ),
                       );
-                      Navigator.pop(context); // Return to previous screen
+                      Navigator.pop(context, true);
                     }
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Error deleting item: $e'),
+                          content: Text('Error deleting part: $e'),
+                          backgroundColor: Colors.red,
                         ),
                       );
                     }
@@ -241,11 +220,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
               label: const Text('Remove Item',
                   style: TextStyle(color: Colors.black)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                elevation: 0, // No shadow
-                padding: EdgeInsets.zero, // Remove default padding
-                minimumSize: Size.zero, // Remove default minimum size
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                backgroundColor: Colors.white,
               ),
             ),
           ),
@@ -260,76 +235,114 @@ class _EditPartsPageState extends State<EditPartsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Image Upload
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                          image: _imageFile != null
-                              ? DecorationImage(
-                                  image: FileImage(_imageFile!),
-                                  fit: BoxFit.cover,
-                                )
-                              : _imageUrl != null
-                                  ? DecorationImage(
-                                      image: NetworkImage(_imageUrl!),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
+                    // Image display section
+                    Container(
+                      height: 200,
+                      child: Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: _selectedCategory != null &&
+                                    _categoryImages
+                                        .containsKey(_selectedCategory)
+                                ? Image.asset(
+                                    _categoryImages[_selectedCategory]!,
+                                    fit: BoxFit.contain,
+                                    height: 180,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print('Error loading image: $error');
+                                      return Container(
+                                        color: Colors.grey[200],
+                                        child: const Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    color: Colors.grey[200],
+                                    child: const Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.image,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Select a category to see image',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          ),
                         ),
-                        child: _imageFile == null && _imageUrl == null
-                            ? const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_photo_alternate,
-                                      size: 50,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Tap to add image',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : null,
                       ),
                     ),
                     const SizedBox(height: 24),
 
                     // Category Dropdown
-                    DropdownButtonFormField<String>(
-                      value: _selectedCategory,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        border: OutlineInputBorder(),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      items: _categories.map((category) {
-                        return DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedCategory = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Please select a category';
-                        }
-                        return null;
-                      },
+                      child: DropdownButtonHideUnderline(
+                        child: ButtonTheme(
+                          alignedDropdown: true,
+                          child: DropdownButton<String>(
+                            value: _selectedCategory,
+                            isExpanded: true,
+                            hint: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              child: Text('Select Category'),
+                            ),
+                            items: _categories.map((category) {
+                              return DropdownMenuItem(
+                                value: category,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: Text(
+                                    category,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategory = value;
+                                _imageUrl = value != null
+                                    ? _categoryImages[value]
+                                    : null;
+                              });
+                            },
+                            icon: const Padding(
+                              padding: EdgeInsets.only(right: 16),
+                              child: Icon(Icons.arrow_drop_down),
+                            ),
+                            dropdownColor: Colors.white,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                            ),
+                            menuMaxHeight: 300,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -352,8 +365,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
                             },
                           ),
                         ),
-                        const SizedBox(
-                            width: 8), // Space between brand and model
+                        const SizedBox(width: 8),
                         Expanded(
                           child: TextFormField(
                             controller: _modelController,
@@ -408,8 +420,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
                             },
                           ),
                         ),
-                        const SizedBox(
-                            width: 8), // Space between quantity and price
+                        const SizedBox(width: 8),
                         Expanded(
                           child: TextFormField(
                             controller: _priceController,
@@ -436,21 +447,19 @@ class _EditPartsPageState extends State<EditPartsPage> {
                     // Cancel Button
                     OutlinedButton(
                       onPressed: () {
-                        Navigator.of(context)
-                            .pop(); // Go back to the previous page
+                        Navigator.of(context).pop();
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.red, // Red background fill
-                        side: const BorderSide(color: Colors.red), // Red border
+                        backgroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
                       ),
                       child: const Text(
                         'Cancel',
-                        style: TextStyle(
-                            color: Colors.white), // White text for contrast
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
-                    const SizedBox(height: 16), // Spacing between buttons
+                    const SizedBox(height: 16),
 
                     // Submit Button
                     ElevatedButton(

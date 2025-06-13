@@ -157,14 +157,48 @@ class _DetailsImportRequestPageState extends State<DetailsImportRequestPage> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      widget.request['imageUrl'],
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        print('Error loading network image: $error');
-                        return const Icon(Icons.broken_image, size: 50);
-                      },
-                    ),
+                    child: widget.request['imageUrl']
+                            .toString()
+                            .startsWith('assets/')
+                        ? Image.asset(
+                            widget.request['imageUrl'],
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              print('Error loading asset image: $error');
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Icon(
+                                  Icons.image_not_supported,
+                                  size: 50,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
+                          )
+                        : Image.network(
+                            widget.request['imageUrl'],
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              print('Error loading network image: $error');
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Icon(
+                                  Icons.image_not_supported,
+                                  size: 50,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ),
               )
@@ -176,8 +210,13 @@ class _DetailsImportRequestPageState extends State<DetailsImportRequestPage> {
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey[200],
                   ),
-                  child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    size: 50,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             const SizedBox(height: 8),

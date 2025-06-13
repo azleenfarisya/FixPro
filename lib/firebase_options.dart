@@ -46,7 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '109677121478',
     projectId: 'fixpro-e07b3',
     authDomain: 'fixpro-e07b3.firebaseapp.com',
-    storageBucket: 'fixpro-e07b3.firebasestorage.app',
+    storageBucket: 'fixpro-e07b3.appspot.com',
     measurementId: 'G-QC0YSPRGGV',
   );
 
@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:109677121478:android:45a07023322e0779432cc7',
     messagingSenderId: '109677121478',
     projectId: 'fixpro-e07b3',
-    storageBucket: 'fixpro-e07b3.firebasestorage.app',
+    storageBucket: 'fixpro-e07b3.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     appId: '1:109677121478:ios:2946dada09c88b02432cc7',
     messagingSenderId: '109677121478',
     projectId: 'fixpro-e07b3',
-    storageBucket: 'fixpro-e07b3.firebasestorage.app',
+    storageBucket: 'fixpro-e07b3.appspot.com',
     iosBundleId: 'com.example.fixPro',
   );
 
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     appId: '1:109677121478:ios:2946dada09c88b02432cc7',
     messagingSenderId: '109677121478',
     projectId: 'fixpro-e07b3',
-    storageBucket: 'fixpro-e07b3.firebasestorage.app',
+    storageBucket: 'fixpro-e07b3.appspot.com',
     iosBundleId: 'com.example.fixPro',
   );
 
@@ -82,7 +82,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '109677121478',
     projectId: 'fixpro-e07b3',
     authDomain: 'fixpro-e07b3.firebaseapp.com',
-    storageBucket: 'fixpro-e07b3.firebasestorage.app',
+    storageBucket: 'fixpro-e07b3.appspot.com',
     measurementId: 'G-TMR7RE46MS',
   );
 }

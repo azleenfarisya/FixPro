@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:typed_data';
 import '../../services/inventory_service.dart';
 
 class AddPartsPage extends StatefulWidget {
@@ -16,8 +12,6 @@ class AddPartsPage extends StatefulWidget {
 class _AddPartsPageState extends State<AddPartsPage> {
   final _formKey = GlobalKey<FormState>();
   final _inventoryService = InventoryService();
-  final _storage = FirebaseStorage.instance;
-  final _imagePicker = ImagePicker();
 
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
@@ -26,10 +20,8 @@ class _AddPartsPageState extends State<AddPartsPage> {
   final _quantityController = TextEditingController(text: '1');
 
   String? _selectedCategory;
-  File? _imageFile;
   String? _imageUrl;
   bool _isLoading = false;
-  double _uploadProgress = 0.0;
 
   final List<String> _categories = [
     'Tires',
@@ -43,6 +35,48 @@ class _AddPartsPageState extends State<AddPartsPage> {
     'Throttle',
     'Fuel tank',
   ];
+
+  // Map categories to their corresponding image assets
+  final Map<String, String> _categoryImages = {
+    'Tires': 'assets/images/Tire_Bridgestone.jpg',
+    'Brake disc': 'assets/images/BrakeDisc_Brembo.jpeg',
+    'Engine': 'assets/images/Engine_Toyota.jpg',
+    'Suspension': 'assets/images/Suspension_KYB.jpeg',
+    'Electrical': 'assets/images/Electrical_Bosch.jpg',
+    'Body parts': 'assets/images/BodyParts_Honda.jpg',
+    'Accessories': 'assets/images/Accessories_AutoGrip.png',
+    'Oil filer': 'assets/images/OilFilter_Mann.jpeg',
+    'Throttle': 'assets/images/Throttle_Siemens.png',
+    'Fuel tank': 'assets/images/FuelTank_Denso.png',
+  };
+
+  // Add quantity validation functions
+  void _validateAndUpdateQuantity(String value) {
+    if (value.isEmpty) {
+      _quantityController.text = '1';
+      return;
+    }
+
+    // Only validate when the field loses focus or when submitting
+    if (!_quantityController.selection.isValid) {
+      final quantity = int.tryParse(value);
+      if (quantity == null || quantity <= 0) {
+        _quantityController.text = '1';
+      }
+    }
+  }
+
+  void _incrementQuantity() {
+    final currentValue = int.tryParse(_quantityController.text) ?? 1;
+    _quantityController.text = (currentValue + 1).toString();
+  }
+
+  void _decrementQuantity() {
+    final currentValue = int.tryParse(_quantityController.text) ?? 1;
+    if (currentValue > 1) {
+      _quantityController.text = (currentValue - 1).toString();
+    }
+  }
 
   @override
   void dispose() {
@@ -69,102 +103,108 @@ class _AddPartsPageState extends State<AddPartsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Image picker section
+                  // Image display section
                   Container(
                     height: 200,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: InkWell(
-                      onTap: _isLoading ? null : _pickImage,
-                      child: _isLoading
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const CircularProgressIndicator(),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Uploading: ${(_uploadProgress * 100).toStringAsFixed(1)}%',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
+                    child: _selectedCategory != null &&
+                            _categoryImages.containsKey(_selectedCategory)
+                        ? Center(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            )
-                          : _imageFile != null
-                              ? Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        _imageFile!,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  _categoryImages[_selectedCategory]!,
+                                  fit: BoxFit.contain,
+                                  height: 180,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    print('Error loading image: $error');
+                                    return Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                        Icons.image_not_supported,
+                                        size: 50,
+                                        color: Colors.grey,
                                       ),
-                                    ),
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: IconButton(
-                                        icon: const Icon(Icons.close,
-                                            color: Colors.white),
-                                        onPressed: () {
-                                          setState(() {
-                                            _imageFile = null;
-                                            _imageUrl = null;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_photo_alternate,
-                                      size: 48,
-                                      color: Colors.grey[400],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Tap to Add Image',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 ),
-                    ),
+                              ),
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.image,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Select a category to see image',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
                   // Category Dropdown
-                  DropdownButtonFormField<String>(
-                    value: _selectedCategory,
-                    decoration: const InputDecoration(
-                      labelText: 'Category',
-                      border: OutlineInputBorder(),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    items: _categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Please select a category';
-                      }
-                      return null;
-                    },
+                    child: DropdownButtonHideUnderline(
+                      child: ButtonTheme(
+                        alignedDropdown: true,
+                        child: DropdownButton<String>(
+                          value: _selectedCategory,
+                          isExpanded: true,
+                          hint: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('Select Category'),
+                          ),
+                          items: _categories.map((category) {
+                            return DropdownMenuItem(
+                              value: category,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  category,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedCategory = value;
+                              _imageUrl =
+                                  value != null ? _categoryImages[value] : null;
+                            });
+                          },
+                          icon: const Padding(
+                            padding: EdgeInsets.only(right: 16),
+                            child: Icon(Icons.arrow_drop_down),
+                          ),
+                          dropdownColor: Colors.white,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                          ),
+                          menuMaxHeight: 300,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -187,7 +227,7 @@ class _AddPartsPageState extends State<AddPartsPage> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 8), // Space between brand and model
+                      const SizedBox(width: 8),
                       Expanded(
                         child: TextFormField(
                           controller: _modelController,
@@ -242,8 +282,7 @@ class _AddPartsPageState extends State<AddPartsPage> {
                           },
                         ),
                       ),
-                      const SizedBox(
-                          width: 8), // Space between quantity and price
+                      const SizedBox(width: 8),
                       Expanded(
                         child: TextFormField(
                           controller: _priceController,
@@ -270,29 +309,35 @@ class _AddPartsPageState extends State<AddPartsPage> {
                   // Cancel Button
                   OutlinedButton(
                     onPressed: () {
-                      Navigator.of(context)
-                          .pop(); // Go back to the previous page
+                      Navigator.of(context).pop();
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.red, // Red background fill
-                      side: const BorderSide(color: Colors.red), // Red border
+                      backgroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
                     ),
                     child: const Text(
                       'Cancel',
-                      style: TextStyle(
-                          color: Colors.white), // White text for contrast
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  const SizedBox(height: 16), // Spacing between buttons
+                  const SizedBox(height: 16),
 
                   // Submit Button
                   ElevatedButton(
-                    onPressed: _submitForm,
+                    onPressed: _isLoading ? null : _submitForm,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Save'),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Save'),
                   ),
                 ],
               ),
@@ -310,113 +355,6 @@ class _AddPartsPageState extends State<AddPartsPage> {
     );
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 70,
-      );
-
-      if (pickedFile != null) {
-        print('Image picked successfully'); // Debug log
-        setState(() {
-          _isLoading = true;
-          _uploadProgress = 0.0;
-        });
-
-        try {
-          final bytes = await pickedFile.readAsBytes();
-          print('Image bytes read: ${bytes.length}'); // Debug log
-
-          final imageUrl = await _uploadImage(bytes);
-          print('Uploaded image URL: $imageUrl'); // Debug log
-
-          if (imageUrl != null) {
-            setState(() {
-              _imageUrl = imageUrl;
-              _imageFile = File(pickedFile.path);
-            });
-          }
-        } finally {
-          setState(() {
-            _isLoading = false;
-            _uploadProgress = 0.0;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error in _pickImage: $e'); // Debug log
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
-      }
-    }
-  }
-
-  Future<String?> _uploadImage(Uint8List bytes) async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) throw Exception('User not authenticated');
-
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = _storage.ref().child('inventory/$userId/$fileName');
-      print('Uploading to path: inventory/$userId/$fileName'); // Debug log
-
-      // Upload bytes directly with progress tracking
-      final uploadTask = ref.putData(bytes);
-
-      // Listen to upload progress
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        final progress = snapshot.bytesTransferred / snapshot.totalBytes;
-        print('Upload progress: ${(progress * 100).toStringAsFixed(2)}%');
-        if (mounted) {
-          setState(() {
-            _uploadProgress = progress;
-          });
-        }
-      });
-
-      // Wait for upload to complete
-      final snapshot = await uploadTask;
-      print(
-          'Upload completed: ${snapshot.bytesTransferred} bytes'); // Debug log
-
-      final downloadUrl = await ref.getDownloadURL();
-      print('Download URL obtained: $downloadUrl'); // Debug log
-      return downloadUrl;
-    } catch (e) {
-      print('Error in _uploadImage: $e'); // Debug log
-      return null;
-    }
-  }
-
-  void _incrementQuantity() {
-    final currentValue = int.tryParse(_quantityController.text) ?? 1;
-    _quantityController.text = (currentValue + 1).toString();
-  }
-
-  void _decrementQuantity() {
-    final currentValue = int.tryParse(_quantityController.text) ?? 1;
-    if (currentValue > 1) {
-      _quantityController.text = (currentValue - 1).toString();
-    }
-  }
-
-  void _validateAndUpdateQuantity(String value) {
-    if (value.isEmpty) {
-      _quantityController.text = '1';
-      return;
-    }
-
-    final number = int.tryParse(value);
-    if (number == null || number < 1) {
-      _quantityController.text = '1';
-    }
-  }
-
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
@@ -431,7 +369,6 @@ class _AddPartsPageState extends State<AddPartsPage> {
     });
 
     try {
-      print('Submitting form with image URL: $_imageUrl'); // Debug log
       await _inventoryService.addInventoryItem(
         name: _nameController.text,
         brand: _brandController.text,
@@ -439,21 +376,26 @@ class _AddPartsPageState extends State<AddPartsPage> {
         category: _selectedCategory!,
         price: double.parse(_priceController.text),
         quantity: int.parse(_quantityController.text),
-        imageUrl: _imageUrl, // This can be null now
+        imageUrl: _imageUrl,
       );
-      print('Inventory item added successfully'); // Debug log
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Part added successfully')),
+          const SnackBar(
+            content: Text('Item added successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
-      print('Error in _submitForm: $e'); // Debug log
+      print('Error in _submitForm: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adding part: $e')),
+          SnackBar(
+            content: Text('Error adding part: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

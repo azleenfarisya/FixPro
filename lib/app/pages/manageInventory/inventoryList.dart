@@ -269,10 +269,10 @@ class _InventoryListPageState extends State<InventoryListPage> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             if (item['imageUrl'] != null)
-                                              Expanded(
+                                              Center(
                                                 child: Container(
-                                                  width: 150,
-                                                  height: 150,
+                                                  width: 55,
+                                                  height: 55,
                                                   decoration: BoxDecoration(
                                                     border: Border.all(
                                                         color: Colors
@@ -285,27 +285,92 @@ class _InventoryListPageState extends State<InventoryListPage> {
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             8),
-                                                    child: Image.network(
-                                                      item['imageUrl'],
-                                                      fit: BoxFit.contain,
-                                                      errorBuilder: (context,
-                                                          error, stackTrace) {
-                                                        print(
-                                                            'Error loading image: $error');
-                                                        return const Icon(
-                                                            Icons.broken_image,
-                                                            size: 50);
-                                                      },
-                                                    ),
+                                                    child: item['imageUrl']
+                                                            .toString()
+                                                            .startsWith(
+                                                                'assets/')
+                                                        ? Image.asset(
+                                                            item['imageUrl'],
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder:
+                                                                (context, error,
+                                                                    stackTrace) {
+                                                              print(
+                                                                  'Error loading asset image: $error');
+                                                              return Container(
+                                                                color: Colors
+                                                                    .grey[200],
+                                                                child:
+                                                                    const Icon(
+                                                                  Icons
+                                                                      .image_not_supported,
+                                                                  size: 24,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                ),
+                                                              );
+                                                            },
+                                                          )
+                                                        : Image.network(
+                                                            item['imageUrl'],
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder:
+                                                                (context, error,
+                                                                    stackTrace) {
+                                                              print(
+                                                                  'Error loading network image: $error');
+                                                              return Container(
+                                                                color: Colors
+                                                                    .grey[200],
+                                                                child:
+                                                                    const Icon(
+                                                                  Icons
+                                                                      .image_not_supported,
+                                                                  size: 24,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                ),
+                                                              );
+                                                            },
+                                                            loadingBuilder:
+                                                                (context, child,
+                                                                    loadingProgress) {
+                                                              if (loadingProgress ==
+                                                                  null)
+                                                                return child;
+                                                              return Container(
+                                                                color: Colors
+                                                                    .grey[200],
+                                                                child:
+                                                                    const Center(
+                                                                  child:
+                                                                      CircularProgressIndicator(),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
                                                   ),
                                                 ),
                                               )
                                             else
-                                              const Expanded(
-                                                child: Center(
-                                                  child: Icon(Icons.image,
-                                                      size: 50,
-                                                      color: Colors.grey),
+                                              Center(
+                                                child: Container(
+                                                  width: 55,
+                                                  height: 55,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Colors
+                                                            .grey.shade300),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    color: Colors.grey[200],
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 24,
+                                                    color: Colors.grey,
+                                                  ),
                                                 ),
                                               ),
                                             const SizedBox(height: 8),

@@ -238,22 +238,85 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                               const SizedBox(height: 16),
                               if (request['imageUrl'] != null)
                                 Center(
-                                  child: Image.network(
-                                    request['imageUrl'],
+                                  child: Container(
+                                    width: 100,
                                     height: 100,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      print(
-                                          'Error loading network image: $error');
-                                      return const Icon(Icons.broken_image,
-                                          size: 50);
-                                    },
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.grey.shade300),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: request['imageUrl']
+                                              .toString()
+                                              .startsWith('assets/')
+                                          ? Image.asset(
+                                              request['imageUrl'],
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                print(
+                                                    'Error loading asset image: $error');
+                                                return Container(
+                                                  color: Colors.grey[200],
+                                                  child: const Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 40,
+                                                    color: Colors.grey,
+                                                  ),
+                                                );
+                                              },
+                                            )
+                                          : Image.network(
+                                              request['imageUrl'],
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                print(
+                                                    'Error loading network image: $error');
+                                                return Container(
+                                                  color: Colors.grey[200],
+                                                  child: const Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 40,
+                                                    color: Colors.grey,
+                                                  ),
+                                                );
+                                              },
+                                              loadingBuilder: (context, child,
+                                                  loadingProgress) {
+                                                if (loadingProgress == null)
+                                                  return child;
+                                                return Container(
+                                                  color: Colors.grey[200],
+                                                  child: const Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                    ),
                                   ),
                                 )
                               else
-                                const Center(
-                                  child: Icon(Icons.image,
-                                      size: 100, color: Colors.grey),
+                                Center(
+                                  child: Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.grey.shade300),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.grey[200],
+                                    ),
+                                    child: const Icon(
+                                      Icons.image_not_supported,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
                               const SizedBox(height: 8),
                               Row(

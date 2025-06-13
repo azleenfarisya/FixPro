@@ -27,14 +27,22 @@ class _OrderPageState extends State<OrderPage> {
   @override
   void initState() {
     super.initState();
-    _totalAmount = widget.part['price'] * _quantity;
+    // Convert price to double if it's not already
+    final price = widget.part['price'] is int
+        ? (widget.part['price'] as int).toDouble()
+        : widget.part['price'] as double;
+    _totalAmount = price * _quantity;
   }
 
   void _updateQuantity(int newQuantity) {
     if (newQuantity >= 1 && newQuantity <= (widget.part['quantity'] ?? 0)) {
       setState(() {
         _quantity = newQuantity;
-        _totalAmount = widget.part['price'] * _quantity;
+        // Convert price to double if it's not already
+        final price = widget.part['price'] is int
+            ? (widget.part['price'] as int).toDouble()
+            : widget.part['price'] as double;
+        _totalAmount = price * _quantity;
       });
     }
   }
@@ -136,14 +144,27 @@ class _OrderPageState extends State<OrderPage> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              widget.part['imageUrl'],
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                print('Error loading network image: $error');
-                                return const Icon(Icons.broken_image, size: 50);
-                              },
-                            ),
+                            child: widget.part['imageUrl'].startsWith('assets/')
+                                ? Image.asset(
+                                    widget.part['imageUrl'],
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print(
+                                          'Error loading asset image: $error');
+                                      return const Icon(Icons.broken_image,
+                                          size: 50);
+                                    },
+                                  )
+                                : Image.network(
+                                    widget.part['imageUrl'],
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print(
+                                          'Error loading network image: $error');
+                                      return const Icon(Icons.broken_image,
+                                          size: 50);
+                                    },
+                                  ),
                           ),
                         ),
                       )
@@ -226,15 +247,21 @@ class _OrderPageState extends State<OrderPage> {
                                       (widget.part['quantity'] ?? 0)) {
                                 setState(() {
                                   _quantity = newQuantity;
-                                  _totalAmount =
-                                      widget.part['price'] * _quantity;
+                                  // Convert price to double if it's not already
+                                  final price = widget.part['price'] is int
+                                      ? (widget.part['price'] as int).toDouble()
+                                      : widget.part['price'] as double;
+                                  _totalAmount = price * _quantity;
                                 });
                               } else if (newQuantity != null &&
                                   newQuantity < 1) {
                                 setState(() {
                                   _quantity = 1;
-                                  _totalAmount =
-                                      widget.part['price'] * _quantity;
+                                  // Convert price to double if it's not already
+                                  final price = widget.part['price'] is int
+                                      ? (widget.part['price'] as int).toDouble()
+                                      : widget.part['price'] as double;
+                                  _totalAmount = price * _quantity;
                                 });
                                 // Optionally show a snackbar for invalid input
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -247,8 +274,11 @@ class _OrderPageState extends State<OrderPage> {
                                       (widget.part['quantity'] ?? 0)) {
                                 setState(() {
                                   _quantity = (widget.part['quantity'] ?? 0);
-                                  _totalAmount =
-                                      widget.part['price'] * _quantity;
+                                  // Convert price to double if it's not already
+                                  final price = widget.part['price'] is int
+                                      ? (widget.part['price'] as int).toDouble()
+                                      : widget.part['price'] as double;
+                                  _totalAmount = price * _quantity;
                                 });
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
