@@ -1,0 +1,114 @@
+import 'package:flutter/material.dart';
+import '../../domain/paymentModel/payment.dart';
+import '../../services/payment_service.dart';
+import '../../theme/app_theme.dart';
+import 'package:intl/intl.dart';
+
+class PaymentInterface extends StatefulWidget {
+  const PaymentInterface({super.key});
+
+  @override
+  State<PaymentInterface> createState() => _PaymentInterfaceState();
+}
+
+class _PaymentInterfaceState extends State<PaymentInterface> {
+  final _paymentService = PaymentService();
+  bool _isLoading = true;
+  List<Payment> _payments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPayments();
+  }
+
+  Future<void> _loadPayments() async {
+    try {
+      final payments = await _paymentService.getAllPayments();
+      setState(() {
+        _payments = payments;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading payments: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String formatTime(String? timeStr) {
+      if (timeStr == null || timeStr.isEmpty) return '';
+      try {
+        // Try to parse as DateTime
+        final dt = DateTime.tryParse(timeStr);
+        if (dt != null) {
+          return DateFormat('hh:mm a').format(dt);
+        }
+      } catch (_) {}
+      // If not parseable, return as is
+      return timeStr;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Payment Management'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.pushNamed(context, '/addPayment');
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Paid Jobs',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ..._payments.where((p) => p.status == 'Paid').map((payment) => Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.check_circle, color: Colors.green),
+                      title: Text(payment.name ?? ''),
+                      subtitle: Text(formatTime(payment.time)),
+                      trailing: Text(
+                        payment.amount.toStringAsFixed(2),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )),
+              const SizedBox(height: 24),
+              const Text(
+                'Unpaid Jobs',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ..._payments.where((p) => p.status == 'Unpaid').map((payment) => Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.hourglass_empty, color: Colors.orange),
+                      title: Text(payment.name ?? ''),
+                      subtitle: Text(formatTime(payment.time)),
+                      trailing: Text(
+                        payment.amount.toStringAsFixed(2),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+} 

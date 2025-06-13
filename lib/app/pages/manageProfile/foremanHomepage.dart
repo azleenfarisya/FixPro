@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../manageRegistration/firstPage.dart';
 import '../manageProfile/profileInterface.dart';
+import '../managePayment/paymentinterface.dart';
 import '../../theme/app_theme.dart';
 
 class ForemanHomePage extends StatefulWidget {
@@ -28,10 +29,11 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
       if (doc.exists) {
         setState(() {
           name = doc.data()?['name'];
@@ -71,8 +73,7 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
       data: AppTheme.getTheme('Foreman'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('FixUp Pro'),
-          centerTitle: true,
+          title: const Text('Foreman Dashboard'),
           actions: [
             IconButton(
               icon: const Icon(Icons.account_circle),
@@ -117,11 +118,20 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.star),
-                title: const Text('Rating'),
+                leading: const Icon(Icons.payment),
+                title: const Text('Payments'),
                 selected: _selectedIndex == 1,
                 onTap: () {
                   setState(() => _selectedIndex = 1);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star),
+                title: const Text('Rating'),
+                selected: _selectedIndex == 2,
+                onTap: () {
+                  setState(() => _selectedIndex = 2);
                   Navigator.pop(context);
                 },
               ),
@@ -138,12 +148,17 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
           index: _selectedIndex,
           children: const [
             Center(child: Text('Home')),
+            PaymentInterface(),
             Center(child: Text('Rating')), // Placeholder for Rating page
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.payment),
+              label: 'Payments',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rating'),
           ],
           currentIndex: _selectedIndex,
