@@ -199,7 +199,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Item deleted successfully!'),
-                          backgroundColor: Colors.red,
+                          backgroundColor: Colors.green,
                         ),
                       );
                       Navigator.pop(context, true);
