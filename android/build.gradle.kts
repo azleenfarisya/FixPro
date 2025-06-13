@@ -1,7 +1,10 @@
 plugins {
     // other plugins if you have
-    id("com.google.gms.google-services") version "4.4.2" apply false
+    id("com.google.gms.google-services") version "4.3.15" apply false
+    id("org.jetbrains.kotlin.android") version "2.0.0" apply false
 }
+
+val kotlinVersion = "2.0.0"
 
 allprojects {
     repositories {

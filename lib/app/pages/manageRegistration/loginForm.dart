@@ -18,18 +18,17 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _loginUser() async {
     if (_formKey.currentState!.validate()) {
       try {
-        UserCredential userCredential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-              email: _email.text.trim(),
-              password: _password.text.trim(),
-            );
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _email.text.trim(),
+          password: _password.text.trim(),
+        );
 
         // Fetch user role from Firestore
-        DocumentSnapshot userDoc =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(userCredential.user!.uid)
-                .get();
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
 
         String role = userDoc['role'];
         ScaffoldMessenger.of(
@@ -57,52 +56,56 @@ class _LoginPageState extends State<LoginPage> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.settings, size: 40, color: Colors.blueGrey),
-                  const Text(
-                    "FixUp Pro",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.settings,
+                          size: 40, color: Colors.blueGrey),
+                      const Text(
+                        "FixUp Pro",
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 20),
+                      Image.asset('assets/images/registration.png',
+                          height: 150),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _email,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.email),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Email is required'
+                            : null,
+                      ),
+                      TextFormField(
+                        controller: _password,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: Icon(Icons.lock),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Password is required'
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _loginUser,
+                        child: const Text("LOGIN"),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  Image.asset('assets/images/registration.png', height: 150),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _email,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Email is required'
-                                : null,
-                  ),
-                  TextFormField(
-                    controller: _password,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock),
-                    ),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Password is required'
-                                : null,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _loginUser,
-                    child: const Text("LOGIN"),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

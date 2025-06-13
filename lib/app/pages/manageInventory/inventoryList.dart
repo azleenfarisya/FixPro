@@ -29,21 +29,18 @@ class _InventoryListPageState extends State<InventoryListPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFC7E3F4), // Light blue background
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: double.infinity, // Make the container span full width
             decoration: const BoxDecoration(
               color: Colors.white, // White background
             ),
-            padding: const EdgeInsets.only(
-                top: 16.0, bottom: 8.0), // Adjust padding as needed
+            padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0), // Re-add horizontal padding
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -54,56 +51,64 @@ class _InventoryListPageState extends State<InventoryListPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Row(
-                        children: [
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ImportPartsPage(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.import_export,
-                                color: Colors.blue), // Icon color
-                            label: const Text('Import Parts',
-                                style: TextStyle(
-                                    color: Colors.blue)), // Text color
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                  color: Colors.blue), // Border color
-                            ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // New row for Import Parts and Add Parts buttons
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ImportPartsPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.import_export,
+                              color: Colors.blue),
+                          label: const Text('Import Parts',
+                              style: TextStyle(color: Colors.blue)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.blue),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          const SizedBox(
-                              width: 8), // Add some space between buttons
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AddPartsPage(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.add, color: Colors.white),
-                            label: const Text('Add Parts',
-                                style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green, // Green background
-                            ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddPartsPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.add, color: Colors.white),
+                          label: const Text('Add Parts',
+                              style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
                 // Category filter buttons
-                const SizedBox(height: 16), // Space between buttons and filters
+                const SizedBox(height: 16),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0), // Re-add horizontal padding
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
                       _buildFilterButton('All'),
@@ -170,16 +175,14 @@ class _InventoryListPageState extends State<InventoryListPage> {
                         final name = item['name'].toString().toLowerCase();
                         final brand = item['brand'].toString().toLowerCase();
                         final model = item['model'].toString().toLowerCase();
-                        final category = item['category']
-                            .toString()
-                            .toLowerCase(); // Include category in search
+                        final category =
+                            item['category'].toString().toLowerCase();
                         final searchQuery = _searchQuery.toLowerCase();
 
                         return name.contains(searchQuery) ||
                             brand.contains(searchQuery) ||
                             model.contains(searchQuery) ||
-                            category
-                                .contains(searchQuery); // Search by category
+                            category.contains(searchQuery);
                       }).toList();
 
                 if (filteredItems.isEmpty) {
@@ -194,8 +197,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
                 for (var item in filteredItems) {
                   final category = item['category'] as String;
                   final standardizedCategory =
-                      _inventoryService.standardizeCategory(
-                          category); // Standardize for grouping
+                      _inventoryService.standardizeCategory(category);
                   if (!itemsByCategory.containsKey(standardizedCategory)) {
                     itemsByCategory[standardizedCategory] = [];
                   }
@@ -243,8 +245,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
                           ),
                         ),
                         SizedBox(
-                          height:
-                              250, // Fixed height for horizontal scrollable grid
+                          height: 250,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: categoryItems.length,
@@ -253,11 +254,11 @@ class _InventoryListPageState extends State<InventoryListPage> {
                               return Stack(
                                 children: [
                                   Container(
-                                    width: 180, // Fixed width for each card
+                                    width: 180,
                                     margin: const EdgeInsets.symmetric(
                                         horizontal: 8.0),
                                     child: Card(
-                                      elevation: 2, // Add some shadow
+                                      elevation: 2,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
@@ -269,35 +270,32 @@ class _InventoryListPageState extends State<InventoryListPage> {
                                           children: [
                                             if (item['imageUrl'] != null)
                                               Expanded(
-                                                child: Center(
-                                                  child: Container(
-                                                    width: 150,
-                                                    height: 150,
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                          color: Colors
-                                                              .grey.shade300),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                      child: Image.network(
-                                                        item['imageUrl'],
-                                                        fit: BoxFit.contain,
-                                                        errorBuilder: (context,
-                                                            error, stackTrace) {
-                                                          print(
-                                                              'Error loading image: $error');
-                                                          return const Icon(
-                                                              Icons
-                                                                  .broken_image,
-                                                              size: 50);
-                                                        },
-                                                      ),
+                                                child: Container(
+                                                  width: 150,
+                                                  height: 150,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Colors
+                                                            .grey.shade300),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    child: Image.network(
+                                                      item['imageUrl'],
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder: (context,
+                                                          error, stackTrace) {
+                                                        print(
+                                                            'Error loading image: $error');
+                                                        return const Icon(
+                                                            Icons.broken_image,
+                                                            size: 50);
+                                                      },
                                                     ),
                                                   ),
                                                 ),
@@ -348,9 +346,7 @@ class _InventoryListPageState extends State<InventoryListPage> {
                                                 color: Colors.grey,
                                               ),
                                             ),
-                                            const SizedBox(
-                                                height:
-                                                    8), // Add small spacing before button
+                                            const SizedBox(height: 8),
                                             SizedBox(
                                               width: double.infinity,
                                               child: ElevatedButton(
@@ -365,14 +361,13 @@ class _InventoryListPageState extends State<InventoryListPage> {
                                                   );
                                                 },
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors
-                                                      .orange, // Orange background
-                                                  foregroundColor: Colors
-                                                      .white, // White text
+                                                  backgroundColor:
+                                                      Colors.orange,
+                                                  foregroundColor: Colors.white,
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            5), // Slightly rounded corners
+                                                            5),
                                                   ),
                                                   padding: const EdgeInsets
                                                       .symmetric(vertical: 8),
@@ -395,10 +390,9 @@ class _InventoryListPageState extends State<InventoryListPage> {
                                           vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors
-                                              .blue, // Blue tag for imported
-                                          borderRadius: BorderRadius.circular(
-                                              5), // Rounded corners
+                                          color: Colors.blue,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
                                         ),
                                         child: const Text(
                                           'Import',

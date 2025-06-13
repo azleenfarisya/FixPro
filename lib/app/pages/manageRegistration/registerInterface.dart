@@ -20,20 +20,20 @@ class _RegistrationPageState extends State<RegistrationPage> {
   Future<void> _registerUser() async {
     if (_formKey.currentState!.validate()) {
       try {
-        UserCredential userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-              email: _email.text.trim(),
-              password: _password.text.trim(),
-            );
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _email.text.trim(),
+          password: _password.text.trim(),
+        );
 
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
             .set({
-              'name': _name.text.trim(),
-              'email': _email.text.trim(),
-              'role': _selectedRole,
-            });
+          'name': _name.text.trim(),
+          'email': _email.text.trim(),
+          'role': _selectedRole,
+        });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Registration successful")),
@@ -72,11 +72,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     labelText: 'Name',
                     prefixIcon: Icon(Icons.person),
                   ),
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Name is required'
-                              : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Name is required'
+                      : null,
                 ),
                 TextFormField(
                   controller: _email,
@@ -94,22 +92,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
-                  items:
-                      ['Owner', 'Foreman']
-                          .map(
-                            (role) => DropdownMenuItem(
-                              value: role,
-                              child: Text(role),
-                            ),
-                          )
-                          .toList(),
+                  items: ['Owner', 'Foreman']
+                      .map(
+                        (role) => DropdownMenuItem(
+                          value: role,
+                          child: Text(role),
+                        ),
+                      )
+                      .toList(),
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.person_outline),
                     labelText: "Role",
                   ),
                   onChanged: (value) => setState(() => _selectedRole = value),
-                  validator:
-                      (value) => value == null ? 'Please select a role' : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a role' : null,
                 ),
                 TextFormField(
                   controller: _password,
@@ -118,11 +115,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     labelText: 'Password',
                     prefixIcon: Icon(Icons.lock),
                   ),
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Password is required'
-                              : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Password is required'
+                      : null,
                 ),
                 TextFormField(
                   controller: _confirmPassword,
