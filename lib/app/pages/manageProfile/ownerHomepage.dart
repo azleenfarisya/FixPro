@@ -30,11 +30,10 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
   Future<void> _loadUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
-      final doc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (doc.exists) {
         setState(() {
           name = doc.data()?['name'];
@@ -74,7 +73,8 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
       data: AppTheme.getTheme('Owner'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Workshop Owner Dashboard'),
+          centerTitle: true,
+          title: const Text('FixUp Pro'),
           actions: [
             IconButton(
               icon: const Icon(Icons.account_circle),
@@ -165,7 +165,10 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory),
               label: 'Inventory',
@@ -174,10 +177,15 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
               icon: Icon(Icons.payment),
               label: 'Payments',
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rating'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.star),
+              label: 'Rating',
+            ),
           ],
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          elevation: 8,
         ),
       ),
     );
