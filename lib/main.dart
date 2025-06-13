@@ -14,6 +14,7 @@ import 'app/pages/manageInventory/inventoryList.dart';
 import 'app/pages/manageInventory/addParts.dart';
 import 'app/pages/manageInventory/importParts.dart';
 import 'app/pages/manageInventory/findWorkshop.dart';
+import 'app/pages/managePayment/addpayment.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +45,7 @@ class FixUpProApp extends StatelessWidget {
         '/addParts': (context) => const AddPartsPage(), // Add Parts
         '/importParts': (context) => const ImportPartsPage(), // Import Parts
         '/findWorkshop': (context) => const FindWorkshopPage(), // Find Workshop
+        '/addPayment': (context) => const AddPaymentPage(), // Add Payment
       },
     );
   }

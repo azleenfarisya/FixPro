@@ -17,8 +17,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _timeController = TextEditingController();
   String _selectedPaymentMethod = 'Cash';
-  String _selectedStatus = 'Pending';
 
   final List<String> _paymentMethods = [
     'Cash',
@@ -28,17 +29,12 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     'Mobile Payment',
   ];
 
-  final List<String> _statusOptions = [
-    'Pending',
-    'Completed',
-    'Failed',
-    'Refunded',
-  ];
-
   @override
   void dispose() {
     _amountController.dispose();
     _descriptionController.dispose();
+    _nameController.dispose();
+    _timeController.dispose();
     super.dispose();
   }
 
@@ -56,9 +52,12 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       await _paymentService.addPayment(
         userId: userId,
         amount: double.parse(_amountController.text),
-        status: _selectedStatus,
+        status: 'Unpaid',
         description: _descriptionController.text,
         paymentMethod: _selectedPaymentMethod,
+        name: _nameController.text,
+        role: 'Foreman',
+        time: _timeController.text,
       );
 
       if (mounted) {
@@ -133,23 +132,29 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _selectedStatus,
+                    TextFormField(
+                      controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: 'Status',
+                        labelText: 'Foreman Name',
                       ),
-                      items: _statusOptions.map((String status) {
-                        return DropdownMenuItem<String>(
-                          value: status,
-                          child: Text(status),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedStatus = newValue;
-                          });
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter the foreman\'s name';
                         }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _timeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Time',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter the time';
+                        }
+                        return null;
                       },
                     ),
                     const SizedBox(height: 16),

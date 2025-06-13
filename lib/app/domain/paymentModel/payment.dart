@@ -9,6 +9,9 @@ class Payment {
   final String? description;
   final String? paymentMethod;
   final String? transactionId;
+  final String? name;
+  final String? role;
+  final String? time;
 
   Payment({
     required this.id,
@@ -19,6 +22,9 @@ class Payment {
     this.description,
     this.paymentMethod,
     this.transactionId,
+    this.name,
+    this.role,
+    this.time,
   });
 
   factory Payment.fromMap(Map<String, dynamic> data) {
@@ -33,6 +39,9 @@ class Payment {
       description: data['description'],
       paymentMethod: data['paymentMethod'],
       transactionId: data['transactionId'],
+      name: data['name'],
+      role: data['role'],
+      time: data['time'],
     );
   }
 
@@ -46,6 +55,9 @@ class Payment {
       'description': description,
       'paymentMethod': paymentMethod,
       'transactionId': transactionId,
+      'name': name,
+      'role': role,
+      'time': time,
     };
   }
 } 
