@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/inventory_service.dart';
 
 class AddPartsPage extends StatefulWidget {

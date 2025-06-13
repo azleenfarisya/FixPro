@@ -2,22 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class DetailsImportRequestPage extends StatefulWidget {
+class ViewRequestPage extends StatefulWidget {
   final String requestId;
   final Map<String, dynamic> request;
 
-  const DetailsImportRequestPage({
+  const ViewRequestPage({
     super.key,
     required this.requestId,
     required this.request,
   });
 
   @override
-  State<DetailsImportRequestPage> createState() =>
-      _DetailsImportRequestPageState();
+  State<ViewRequestPage> createState() => _ViewRequestPageState();
 }
 
-class _DetailsImportRequestPageState extends State<DetailsImportRequestPage> {
+class _ViewRequestPageState extends State<ViewRequestPage> {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 

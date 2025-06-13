@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'findWorkshop.dart';
-import 'detailsImportRequestPage.dart';
+import 'viewRequest.dart';
 
 class ImportPartsPage extends StatefulWidget {
   const ImportPartsPage({super.key});
@@ -172,7 +172,7 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetailsImportRequestPage(
+                            builder: (context) => ViewRequestPage(
                               requestId: requestId,
                               request: request,
                             ),

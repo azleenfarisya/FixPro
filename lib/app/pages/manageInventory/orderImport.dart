@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class OrderPage extends StatefulWidget {
+class OrderImport extends StatefulWidget {
   final Map<String, dynamic> part;
   final String workshopId;
   final String workshopName;
 
-  const OrderPage({
+  const OrderImport({
     super.key,
     required this.part,
     required this.workshopId,
@@ -15,10 +15,10 @@ class OrderPage extends StatefulWidget {
   });
 
   @override
-  State<OrderPage> createState() => _OrderPageState();
+  State<OrderImport> createState() => _OrderImportState();
 }
 
-class _OrderPageState extends State<OrderPage> {
+class _OrderImportState extends State<OrderImport> {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
   int _quantity = 1;
