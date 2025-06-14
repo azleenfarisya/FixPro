@@ -66,17 +66,9 @@ class PaymentService {
     String? time,
   }) async {
     final paymentRef = _firestore.collection('payments').doc(paymentId);
-    
+    print('DEBUG: Updating payment $paymentId with status $status');
     await paymentRef.update({
-      'amount': amount,
       'status': status,
-      'description': description,
-      'paymentMethod': paymentMethod,
-      'transactionId': transactionId,
-      'name': name,
-      'role': role,
-      'time': time,
-      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
