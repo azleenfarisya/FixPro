@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../manageRegistration/firstPage.dart';
 import '../manageProfile/profileInterface.dart';
 import '../managePayment/paymentinterface.dart';
+import '../manageWorkingSchedule/AddWorkingTime.dart';
 import '../../theme/app_theme.dart';
 
 class ForemanHomePage extends StatefulWidget {
@@ -118,8 +119,8 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.payment),
-                title: const Text('Payments'),
+                leading: const Icon(Icons.work),
+                title: const Text('Schedule'),
                 selected: _selectedIndex == 1,
                 onTap: () {
                   setState(() => _selectedIndex = 1);
@@ -127,11 +128,20 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.star),
-                title: const Text('Rating'),
+                leading: const Icon(Icons.payment),
+                title: const Text('Payments'),
                 selected: _selectedIndex == 2,
                 onTap: () {
                   setState(() => _selectedIndex = 2);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star),
+                title: const Text('Rating'),
+                selected: _selectedIndex == 3,
+                onTap: () {
+                  setState(() => _selectedIndex = 3);
                   Navigator.pop(context);
                 },
               ),
@@ -148,6 +158,7 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
           index: _selectedIndex,
           children: const [
             Center(child: Text('Home')),
+            Addworkingtime(),
             PaymentInterface(),
             Center(child: Text('Rating')), // Placeholder for Rating page
           ],
@@ -155,6 +166,7 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Schedule'),
             BottomNavigationBarItem(
               icon: Icon(Icons.payment),
               label: 'Payments',

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../manageRegistration/firstPage.dart';
 import '../manageProfile/profileInterface.dart';
+import '../manageWorkingSchedule/WorkScheduleList.dart';
 import '../manageInventory/inventoryList.dart';
 import '../managePayment/paymentinterface.dart';
 import '../../theme/app_theme.dart';
@@ -119,8 +120,8 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.inventory),
-                title: const Text('Inventory'),
+                leading: const Icon(Icons.home),
+                title: const Text('Schedule'),
                 selected: _selectedIndex == 1,
                 onTap: () {
                   setState(() => _selectedIndex = 1);
@@ -128,8 +129,8 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.payment),
-                title: const Text('Payments'),
+                leading: const Icon(Icons.inventory),
+                title: const Text('Inventory'),
                 selected: _selectedIndex == 2,
                 onTap: () {
                   setState(() => _selectedIndex = 2);
@@ -137,11 +138,20 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.star),
-                title: const Text('Rating'),
+                leading: const Icon(Icons.payment),
+                title: const Text('Payments'),
                 selected: _selectedIndex == 3,
                 onTap: () {
                   setState(() => _selectedIndex = 3);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star),
+                title: const Text('Rating'),
+                selected: _selectedIndex == 4,
+                onTap: () {
+                  setState(() => _selectedIndex = 4);
                   Navigator.pop(context);
                 },
               ),
@@ -158,6 +168,7 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
           index: _selectedIndex,
           children: const [
             Center(child: Text('Home')),
+            Workschedulelist(),
             InventoryListPage(),
             PaymentInterface(),
             Center(child: Text('Rating')), // Placeholder for Rating page
@@ -168,6 +179,10 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.work),
+              label: 'Schedule',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory),
