@@ -176,7 +176,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
                   builder: (context) => AlertDialog(
                     title: const Text('Confirm Delete'),
                     content: const Text(
-                      'Are you sure you want to delete this item?',
+                      'Are you sure you want to remove this item?',
                     ),
                     actions: [
                       TextButton(
