@@ -6,6 +6,7 @@ import '../manageProfile/profileInterface.dart';
 import '../manageWorkingSchedule/WorkScheduleList.dart';
 import '../manageInventory/inventoryList.dart';
 import '../managePayment/paymentinterface.dart';
+import '../manageRating/ratingDashboard.dart';
 import '../../theme/app_theme.dart';
 
 class OwnerHomePage extends StatefulWidget {
@@ -166,14 +167,15 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
         ),
         body: IndexedStack(
           index: _selectedIndex,
-          children: const [
-            Center(child: Text('Home')),
-            Workschedulelist(),
-            InventoryListPage(),
-            PaymentInterface(),
-            Center(child: Text('Rating')), // Placeholder for Rating page
+          children: [
+            const Center(child: Text('Home')),
+            const Workschedulelist(),
+            const InventoryListPage(),
+            const PaymentInterface(),
+            RatingDashboardPage(ownerId: _auth.currentUser?.uid ?? ''),
           ],
         ),
+
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(

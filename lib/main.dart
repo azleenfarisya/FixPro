@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'app/theme/app_theme.dart';
 
@@ -18,6 +19,8 @@ import 'app/pages/managePayment/addpayment.dart';
 import 'app/pages/managePayment/paymentdetail.dart';
 import 'app/pages/managePayment/updatepayment.dart';
 import 'app/pages/managePayment/paymentsuccess.dart';
+import 'app/pages/manageRating/ratingDashboard.dart';
+import 'app/pages/manageRating/foremanList.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +36,11 @@ void main() async {
       rethrow;
     }
   }
+
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug, // Use debug for development
+  );
+  
   runApp(const FixUpProApp());
 }
 
@@ -63,6 +71,8 @@ class FixUpProApp extends StatelessWidget {
         '/updatePayment': (context) => const UpdatePaymentPage(), // Update Payment
         '/paymentDetail': (context) => const PaymentDetailPage(), // Payment Detail
         '/payment-success': (context) => const PaymentSuccessPage(),
+        '/ratingDashboard': (context) => const RatingDashboardPage(),
+        '/foremanList': (context) => const ForemanListPage()
       },
     );
   }
