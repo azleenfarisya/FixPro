@@ -31,19 +31,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     if (e.toString().contains('duplicate-app')) {
-      // Firebase is already initialized, we can ignore this error
       print('Firebase already initialized');
     } else {
-      // If it's a different error, we should rethrow it
       rethrow;
     }
   }
 
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.debug, // Use debug for development
+    androidProvider: AndroidProvider.debug,
   );
 
   runApp(const FixUpProApp());
@@ -60,19 +59,18 @@ class FixUpProApp extends StatelessWidget {
       theme: AppTheme.getTheme('Owner'), // Default theme
       initialRoute: '/',
       routes: {
-        '/': (context) => const FirstPage(), // Welcome screen
-        '/login': (context) => const LoginPage(), // Login screen
-        '/register': (context) => const RegistrationPage(), // Registration
-        '/ownerHome': (context) => const OwnerHomePage(), // Role: Owner
-        '/foremanHome': (context) => const ForemanHomePage(), // Role: Foreman
+        '/': (context) => const FirstPage(),
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegistrationPage(),
+        '/ownerHome': (context) => const OwnerHomePage(),
+        '/foremanHome': (context) => const ForemanHomePage(),
         '/profile': (context) => const ProfilePage(),
         '/editProfile': (context) => const EditProfilePage(),
-        '/inventory': (context) =>
-            const InventoryListPage(), // Inventory Management
-        '/addParts': (context) => const AddPartsPage(), // Add Parts
-        '/importParts': (context) => const ImportPartsPage(), // Import Parts
-        '/findWorkshop': (context) => const FindWorkshopPage(), // Find Workshop
-        '/addPayment': (context) => const AddPaymentPage(), // Add Payment
+        '/inventory': (context) => const InventoryListPage(),
+        '/addParts': (context) => const AddPartsPage(),
+        '/importParts': (context) => const ImportPartsPage(),
+        '/findWorkshop': (context) => const FindWorkshopPage(),
+        '/addPayment': (context) => const AddPaymentPage(),
         '/updatePayment': (context) {
           final payment = ModalRoute.of(context)!.settings.arguments as Payment;
           return UpdatePaymentPage(payment: payment);
@@ -82,14 +80,21 @@ class FixUpProApp extends StatelessWidget {
           return PaymentDetailPage(payment: payment);
         },
         '/payment-success': (context) => const PaymentSuccessPage(),
-        '/ratingDashboard': (context) => const RatingDashboardPage(),
+
+        // ✅ Updated route for ratingDashboard
+        '/ratingDashboard': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return RatingDashboardPage(
+            userRole: args['userRole'],
+          );
+        },
+
         '/foremanList': (context) => const ForemanListPage(),
 
-        //Manage Working Schedule
+        // Manage Working Schedule
         '/foremanWorkList': (context) => const ForemanWorkListPage(),
         '/addWorkDetails': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return AddWorkDetailsPage(
             foremanName: args['foremanName'] ?? '',
             selectedDate: args['selectedDate'] as DateTime,
@@ -99,8 +104,7 @@ class FixUpProApp extends StatelessWidget {
           );
         },
         '/editWorkingTime': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as Map<String, dynamic>?;
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
           return EditWorkingTimePage(
             docId: args?['docId'] ?? '',
             date: args?['date'] ?? DateTime.now().toIso8601String(),

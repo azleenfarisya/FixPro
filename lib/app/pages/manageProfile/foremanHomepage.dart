@@ -1,11 +1,12 @@
-import 'package:fix_pro/app/pages/manageWorkingSchedule/WorkCalendar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../manageRegistration/firstPage.dart';
 import '../manageProfile/profileInterface.dart';
 import '../manageWorkingSchedule/WorkCalendar.dart';
 import '../managePayment/paymentinterface.dart';
+import '../manageRating/ratingDashboard.dart';
 import '../../theme/app_theme.dart';
 
 class ForemanHomePage extends StatefulWidget {
@@ -157,21 +158,20 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
         ),
         body: IndexedStack(
           index: _selectedIndex,
-          children: const [
-            Center(child: Text('Home')),
-            ForemanWorkListPage(),
-            PaymentInterface(),
-            Center(child: Text('Rating')), // Placeholder for Rating page
+          children: [
+            const Center(child: Text('Home')),
+            const ForemanWorkListPage(),
+            const PaymentInterface(),
+            RatingDashboardPage(
+              userRole: 'foreman',
+            ),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Schedule'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.payment),
-              label: 'Payments',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Payments'),
             BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rating'),
           ],
           currentIndex: _selectedIndex,

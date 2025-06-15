@@ -176,7 +176,9 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
             const OwnerCalendarPage(),
             const InventoryListPage(),
             const PaymentInterface(),
-            RatingDashboardPage(ownerId: _auth.currentUser?.uid ?? ''),
+            RatingDashboardPage(
+              userRole: 'owner',
+            ),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(

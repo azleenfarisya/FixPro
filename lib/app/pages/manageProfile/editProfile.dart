@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../theme/app_theme.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -18,6 +19,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _icController = TextEditingController();
   final _addressController = TextEditingController();
   String _gender = 'Male';
+  String _role = 'Owner'; // Default fallback
   File? _imageFile;
   String? _imagePath;
   bool _isLoading = true;
@@ -46,8 +48,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         _icController.text = data['ic'] ?? '';
         _addressController.text = data['address'] ?? '';
         _gender = data['gender'] ?? 'Male';
+        _role = data['role'] ?? 'Owner';
         _imagePath = data['imagePath'];
-        if (_imagePath != null) {
+        if (_imagePath != null && File(_imagePath!).existsSync()) {
           _imageFile = File(_imagePath!);
         }
         _isLoading = false;
@@ -62,7 +65,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (picked != null) {
       setState(() {
         _imageFile = File(picked.path);
-        _imagePath = picked.path; // Save local path
+        _imagePath = picked.path;
       });
     }
   }
@@ -92,90 +95,100 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  children: [
-                    Center(
-                      child: GestureDetector(
-                        onTap: _pickImage,
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.grey[300],
-                          backgroundImage:
-                              _imageFile != null ? FileImage(_imageFile!) : null,
-                          child: _imageFile == null
-                              ? const Icon(Icons.camera_alt, size: 40)
-                              : null,
+    final themeColor = AppTheme.getRoleColor(_role);
+    return Theme(
+      data: AppTheme.getTheme(_role),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Profile'),
+          backgroundColor: themeColor,
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    children: [
+                      Center(
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey[300],
+                            backgroundImage:
+                                _imageFile != null ? FileImage(_imageFile!) : null,
+                            child: _imageFile == null
+                                ? const Icon(Icons.camera_alt, size: 40)
+                                : null,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name'),
-                      validator: (value) =>
-                          value!.isEmpty ? 'Please enter name' : null,
-                    ),
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone Number',
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(labelText: 'Name'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Please enter name' : null,
                       ),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) =>
-                          value!.isEmpty ? 'Please enter phone number' : null,
-                    ),
-                    TextFormField(
-                      controller: _icController,
-                      decoration: const InputDecoration(
-                        labelText: 'IC Number',
+                      TextFormField(
+                        controller: _phoneController,
+                        decoration:
+                            const InputDecoration(labelText: 'Phone Number'),
+                        keyboardType: TextInputType.phone,
+                        validator: (value) => value!.isEmpty
+                            ? 'Please enter phone number'
+                            : null,
                       ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) =>
-                          value!.isEmpty ? 'Please enter IC number' : null,
-                    ),
-                    TextFormField(
-                      controller: _addressController,
-                      decoration: const InputDecoration(labelText: 'Address'),
-                      validator: (value) =>
-                          value!.isEmpty ? 'Please enter address' : null,
-                    ),
-                    const SizedBox(height: 10),
-                    const Text('Gender'),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: 'Male',
-                          groupValue: _gender,
-                          onChanged: (value) =>
-                              setState(() => _gender = value!),
+                      TextFormField(
+                        controller: _icController,
+                        decoration:
+                            const InputDecoration(labelText: 'IC Number'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Please enter IC number' : null,
+                      ),
+                      TextFormField(
+                        controller: _addressController,
+                        decoration:
+                            const InputDecoration(labelText: 'Address'),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Please enter address' : null,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text('Gender'),
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: 'Male',
+                            groupValue: _gender,
+                            onChanged: (value) =>
+                                setState(() => _gender = value!),
+                          ),
+                          const Text('Male'),
+                          Radio<String>(
+                            value: 'Female',
+                            groupValue: _gender,
+                            onChanged: (value) =>
+                                setState(() => _gender = value!),
+                          ),
+                          const Text('Female'),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _saveProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: themeColor,
                         ),
-                        const Text('Male'),
-                        Radio<String>(
-                          value: 'Female',
-                          groupValue: _gender,
-                          onChanged: (value) =>
-                              setState(() => _gender = value!),
-                        ),
-                        const Text('Female'),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _saveProfile,
-                      child: const Text('Save Profile'),
-                    ),
-                  ],
+                        child: const Text('Save Profile'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }
