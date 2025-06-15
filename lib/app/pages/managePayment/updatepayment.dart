@@ -48,7 +48,10 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
         if (doc.exists) {
           setState(() {
             _currentUserRole = doc['role'];
@@ -77,8 +80,12 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
     _descriptionController.text = payment.description ?? '';
     _nameController.text = payment.name ?? '';
     _timeController.text = payment.time ?? '';
-    _selectedPaymentMethod = _paymentMethods.contains(payment.paymentMethod) ? payment.paymentMethod! : _paymentMethods.first;
-    _selectedStatus = _statusOptions.contains(payment.status) ? payment.status! : _statusOptions.first;
+    _selectedPaymentMethod = _paymentMethods.contains(payment.paymentMethod)
+        ? payment.paymentMethod!
+        : _paymentMethods.first;
+    _selectedStatus = _statusOptions.contains(payment.status)
+        ? payment.status
+        : _statusOptions.first;
   }
 
   Future<void> _pickTime() async {
@@ -96,7 +103,7 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
 
   Future<void> _submitForm(Payment payment) async {
     if (!_formKey.currentState!.validate()) return;
-    if (payment.id == null || payment.id!.isEmpty) {
+    if (payment.id.isEmpty) {
       print('ERROR: Payment id is missing!');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Payment cannot be updated: missing ID')),
@@ -107,9 +114,10 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
       _isLoading = true;
     });
     try {
-      print('Updating payment with id: \\${payment.id} and status: \\$_selectedStatus');
+      print(
+          'Updating payment with id: \\${payment.id} and status: \\$_selectedStatus');
       await _paymentService.updatePayment(
-        paymentId: payment.id!,
+        paymentId: payment.id,
         amount: double.parse(_amountController.text.replaceAll(',', '')),
         status: _selectedStatus,
         description: _descriptionController.text,
@@ -158,9 +166,11 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
       ),
     );
     if (confirm == true) {
-      setState(() { _isLoading = true; });
+      setState(() {
+        _isLoading = true;
+      });
       try {
-        await _paymentService.deletePayment(payment.id!);
+        await _paymentService.deletePayment(payment.id);
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -174,7 +184,10 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
           );
         }
       } finally {
-        if (mounted) setState(() { _isLoading = false; });
+        if (mounted)
+          setState(() {
+            _isLoading = false;
+          });
       }
     }
   }
@@ -199,15 +212,18 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
                         labelText: 'Amount',
                         prefixText: 'RM',
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*\.?[0-9]*')),
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^[0-9]*\.?[0-9]*')),
                       ],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter an amount';
                         }
-                        if (double.tryParse(value.replaceAll(',', '')) == null) {
+                        if (double.tryParse(value.replaceAll(',', '')) ==
+                            null) {
                           return 'Please enter a valid number';
                         }
                         return null;
@@ -306,11 +322,11 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
                         ),
                         onPressed: () => _deletePayment(payment),
                         child: const Text('Delete Payment'),
-                    ),
+                      ),
                   ],
                 ),
               ),
             ),
     );
   }
-} 
+}

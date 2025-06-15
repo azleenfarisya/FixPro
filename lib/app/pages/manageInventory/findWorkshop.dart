@@ -326,7 +326,9 @@ class _FindWorkshopPageState extends State<FindWorkshopPage> {
                                                         child,
                                                         loadingProgress) {
                                                       if (loadingProgress ==
-                                                          null) return child;
+                                                          null) {
+                                                        return child;
+                                                      }
                                                       return Container(
                                                         color: Colors.grey[200],
                                                         child: const Center(
@@ -393,8 +395,9 @@ class _FindWorkshopPageState extends State<FindWorkshopPage> {
                                           ],
                                         ),
                                         ElevatedButton(
-                                          onPressed: () => _navigateToOrderImport(
-                                              item, workshopId, workshopName!),
+                                          onPressed: () =>
+                                              _navigateToOrderImport(item,
+                                                  workshopId, workshopName!),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.black,
                                             foregroundColor: Colors.white,

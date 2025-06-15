@@ -1,10 +1,11 @@
+import 'package:fix_pro/app/pages/manageWorkingSchedule/WorkCalendar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../manageRegistration/firstPage.dart';
 import '../manageProfile/profileInterface.dart';
+import '../manageWorkingSchedule/WorkCalendar.dart';
 import '../managePayment/paymentinterface.dart';
-import '../manageWorkingSchedule/AddWorkingTime.dart';
 import '../../theme/app_theme.dart';
 
 class ForemanHomePage extends StatefulWidget {
@@ -158,7 +159,7 @@ class _ForemanHomePageState extends State<ForemanHomePage> {
           index: _selectedIndex,
           children: const [
             Center(child: Text('Home')),
-            Addworkingtime(),
+            ForemanWorkListPage(),
             PaymentInterface(),
             Center(child: Text('Rating')), // Placeholder for Rating page
           ],

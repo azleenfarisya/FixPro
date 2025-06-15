@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/payment_service.dart';
-import '../../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+<<<<<<< Updated upstream
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+=======
+>>>>>>> Stashed changes
 import 'package:slide_to_confirm/slide_to_confirm.dart';
 
 class AddPaymentPage extends StatefulWidget {
@@ -74,7 +76,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     if (text.isEmpty) return;
     final number = double.tryParse(text);
     if (number == null) return;
-    final newText = NumberFormat.currency(symbol: '', decimalDigits: 2).format(number);
+    final newText =
+        NumberFormat.currency(symbol: '', decimalDigits: 2).format(number);
     if (_amountController.text != newText) {
       _amountController.value = TextEditingValue(
         text: newText,
@@ -142,7 +145,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       builder: (context) {
         bool confirmed = false;
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -154,19 +158,24 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 16),
-                const Text('Confirm Payment', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Confirm Payment',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Text('Amount:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Amount:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
-                    Text('RM${_amountController.text}', style: const TextStyle(fontSize: 18)),
+                    Text('RM${_amountController.text}',
+                        style: const TextStyle(fontSize: 18)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Text('Payment Method:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Payment Method:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
                     Text(_selectedPaymentMethod),
                   ],
@@ -174,7 +183,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Text('Foreman:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Foreman:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
                     Text(_selectedForemanName ?? ''),
                   ],
@@ -182,15 +192,18 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Text('Time:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Time:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
-                    Text('${_startTimeController.text} - ${_endTimeController.text}'),
+                    Text(
+                        '${_startTimeController.text} - ${_endTimeController.text}'),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Status:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
                     Text(_selectedStatus),
                   ],
@@ -208,7 +221,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                         },
                         backgroundColor: Colors.grey[200]!,
                         foregroundColor: Colors.teal,
-                        textStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                        textStyle: const TextStyle(
+                            color: Colors.black, fontWeight: FontWeight.bold),
                       );
                     },
                   ),
@@ -295,7 +309,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter an amount';
                         }
-                        if (double.tryParse(value.replaceAll(',', '')) == null) {
+                        if (double.tryParse(value.replaceAll(',', '')) ==
+                            null) {
                           return 'Please enter a valid number';
                         }
                         return null;
@@ -423,4 +438,4 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             ),
     );
   }
-} 
+}

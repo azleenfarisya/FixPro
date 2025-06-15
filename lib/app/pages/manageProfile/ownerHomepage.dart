@@ -1,3 +1,4 @@
+import 'package:fix_pro/app/pages/manageWorkingSchedule/WorkScheduleList.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -167,12 +168,21 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
         ),
         body: IndexedStack(
           index: _selectedIndex,
+<<<<<<< Updated upstream
           children: [
             const Center(child: Text('Home')),
             const Workschedulelist(),
             const InventoryListPage(),
             const PaymentInterface(),
             RatingDashboardPage(ownerId: _auth.currentUser?.uid ?? ''),
+=======
+          children: const [
+            Center(child: Text('Home')),
+            OwnerCalendarPage(),
+            InventoryListPage(),
+            PaymentInterface(),
+            Center(child: Text('Rating')), // Placeholder for Rating page
+>>>>>>> Stashed changes
           ],
         ),
 

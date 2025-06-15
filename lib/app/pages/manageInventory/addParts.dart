@@ -103,7 +103,7 @@ class _AddPartsPageState extends State<AddPartsPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Image display section
-                  Container(
+                  SizedBox(
                     height: 200,
                     child: _selectedCategory != null &&
                             _categoryImages.containsKey(_selectedCategory)

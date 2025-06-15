@@ -14,9 +14,9 @@ class FirstPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.settings, size: 30, color: Colors.blueGrey),
                   SizedBox(width: 8),
                   Text(

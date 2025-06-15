@@ -236,7 +236,7 @@ class _EditPartsPageState extends State<EditPartsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Image display section
-                    Container(
+                    SizedBox(
                       height: 200,
                       child: Center(
                         child: Container(

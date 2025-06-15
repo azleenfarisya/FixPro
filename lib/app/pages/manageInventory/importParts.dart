@@ -286,8 +286,9 @@ class _ImportPartsPageState extends State<ImportPartsPage> {
                                               },
                                               loadingBuilder: (context, child,
                                                   loadingProgress) {
-                                                if (loadingProgress == null)
+                                                if (loadingProgress == null) {
                                                   return child;
+                                                }
                                                 return Container(
                                                   color: Colors.grey[200],
                                                   child: const Center(

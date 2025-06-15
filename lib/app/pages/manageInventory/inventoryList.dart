@@ -39,12 +39,12 @@ class _InventoryListPageState extends State<InventoryListPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Parts & Stock',
                         style: TextStyle(
                           fontSize: 24,
@@ -336,8 +336,9 @@ class _InventoryListPageState extends State<InventoryListPage> {
                                                                 (context, child,
                                                                     loadingProgress) {
                                                               if (loadingProgress ==
-                                                                  null)
+                                                                  null) {
                                                                 return child;
+                                                              }
                                                               return Container(
                                                                 color: Colors
                                                                     .grey[200],
