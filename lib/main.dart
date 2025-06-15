@@ -19,15 +19,12 @@ import 'app/pages/managePayment/addpayment.dart';
 import 'app/pages/managePayment/paymentdetail.dart';
 import 'app/pages/managePayment/updatepayment.dart';
 import 'app/pages/managePayment/paymentsuccess.dart';
-<<<<<<< Updated upstream
 import 'app/pages/manageRating/ratingDashboard.dart';
 import 'app/pages/manageRating/foremanList.dart';
-=======
 import 'app/pages/manageWorkingSchedule/WorkCalendar.dart';
 import 'app/pages/manageWorkingSchedule/WorkScheduleList.dart';
 import 'app/pages/manageWorkingSchedule/AddWorkDetails.dart';
 import 'app/pages/manageWorkingSchedule/EditWorkingTime.dart';
->>>>>>> Stashed changes
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,10 +77,8 @@ class FixUpProApp extends StatelessWidget {
         '/paymentDetail': (context) =>
             const PaymentDetailPage(), // Payment Detail
         '/payment-success': (context) => const PaymentSuccessPage(),
-<<<<<<< Updated upstream
         '/ratingDashboard': (context) => const RatingDashboardPage(),
         '/foremanList': (context) => const ForemanListPage()
-=======
 
         //Manage Working Schedule
         '/foremanWorkList': (context) => const ForemanWorkListPage(),
@@ -108,7 +103,6 @@ class FixUpProApp extends StatelessWidget {
             endTime: args?['endTime'] ?? '00:00',
           );
         },
->>>>>>> Stashed changes
       },
     );
   }
