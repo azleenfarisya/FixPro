@@ -174,6 +174,7 @@ class _OwnerCalendarPageState extends State<OwnerCalendarPage> {
       appBar: AppBar(
         title: const Text("Owner View - Schedule Calendar"),
         backgroundColor: const Color(0xFF90A4B7),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [

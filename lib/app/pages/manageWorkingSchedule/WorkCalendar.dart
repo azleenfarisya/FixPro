@@ -218,7 +218,9 @@ class _ForemanWorkListPageState extends State<ForemanWorkListPage> {
                     "Time: ${work['start_time']} - ${work['end_time']}",
                     style: const TextStyle(fontSize: 16),
                   ),
-                  if (work['vehicle_name'] != null) ...[
+                  // Combine vehicle, plate, and job assignment into one clickable box
+                  if (work['vehicle_name'] != null ||
+                      work['job_assignment'] != null) ...[
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () {
@@ -249,54 +251,28 @@ class _ForemanWorkListPageState extends State<ForemanWorkListPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "Vehicle: ${work['vehicle_name']} (${work['vehicle_color']})",
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w500),
-                              ),
-                              Text(
-                                "Plate: ${work['plate_number']}",
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w500),
-                              ),
+                              if (work['vehicle_name'] != null)
+                                Text(
+                                  "Vehicle: ${work['vehicle_name']} (${work['vehicle_color']})",
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              if (work['plate_number'] != null)
+                                Text(
+                                  "Plate: ${work['plate_number']}",
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              if (work['job_assignment'] != null)
+                                Text(
+                                  "Job: ${work['job_assignment']}",
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
+                                ),
                             ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (work['job_assignment'] != null) ...[
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => JobStatusPage(
-                              scheduleId: work['id'],
-                              vehicleName: work['vehicle_name'] ?? '',
-                              vehicleColor: work['vehicle_color'] ?? '',
-                              plateNumber: work['plate_number'] ?? '',
-                              jobAssignment: work['job_assignment'] ?? '',
-                              date: work['date'],
-                              startTime: work['start_time'],
-                              endTime: work['end_time'],
-                            ),
-                          ),
-                        );
-                      },
-                      child: Card(
-                        color: Colors.green[50],
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Text(
-                            "Job: ${work['job_assignment']}",
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                         ),
                       ),
@@ -351,6 +327,7 @@ class _ForemanWorkListPageState extends State<ForemanWorkListPage> {
             onPressed: _loadForemanData,
           ),
         ],
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
