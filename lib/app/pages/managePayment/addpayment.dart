@@ -3,12 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/payment_service.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-<<<<<<< Updated upstream
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-=======
->>>>>>> Stashed changes
-import 'package:slide_to_confirm/slide_to_confirm.dart';
 
 class AddPaymentPage extends StatefulWidget {
   const AddPaymentPage({super.key});
@@ -143,7 +139,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     return showDialog<bool>(
       context: context,
       builder: (context) {
-        bool confirmed = false;
         return Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -152,11 +147,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  'assets/images/duitnow.png',
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
+                const Icon(Icons.payment, size: 80, color: Colors.teal),
                 const SizedBox(height: 16),
                 const Text('Confirm Payment',
                     style:
@@ -209,27 +200,22 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: Builder(
-                    builder: (context) {
-                      return ConfirmationSlider(
-                        text: 'Slide to Confirm Payment',
-                        onConfirmation: () {
-                          confirmed = true;
-                          Navigator.pop(context, true);
-                        },
-                        backgroundColor: Colors.grey[200]!,
-                        foregroundColor: Colors.teal,
-                        textStyle: const TextStyle(
-                            color: Colors.black, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Confirm'),
+                    ),
+                  ],
                 ),
               ],
             ),

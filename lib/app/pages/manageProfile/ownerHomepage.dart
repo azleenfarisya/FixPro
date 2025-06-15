@@ -1,10 +1,9 @@
-import 'package:fix_pro/app/pages/manageWorkingSchedule/WorkScheduleList.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../manageRegistration/firstPage.dart';
 import '../manageProfile/profileInterface.dart';
-import '../manageWorkingSchedule/WorkScheduleList.dart';
+import '../manageWorkingSchedule/WorkCalendar.dart';
 import '../manageInventory/inventoryList.dart';
 import '../managePayment/paymentinterface.dart';
 import '../manageRating/ratingDashboard.dart';
@@ -122,12 +121,15 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.home),
-                title: const Text('Schedule'),
-                selected: _selectedIndex == 1,
+                leading: const Icon(Icons.calendar_today),
+                title: const Text('Work Schedule'),
                 onTap: () {
-                  setState(() => _selectedIndex = 1);
-                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ForemanWorkListPage(),
+                    ),
+                  );
                 },
               ),
               ListTile(
@@ -170,13 +172,12 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
           index: _selectedIndex,
           children: [
             const Center(child: Text('Home')),
-            const Workschedulelist(),
+            const ForemanWorkListPage(),
             const InventoryListPage(),
             const PaymentInterface(),
             RatingDashboardPage(ownerId: _auth.currentUser?.uid ?? ''),
           ],
         ),
-
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(

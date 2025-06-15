@@ -44,7 +44,7 @@ void main() async {
   await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.debug, // Use debug for development
   );
-  
+
   runApp(const FixUpProApp());
 }
 
@@ -78,7 +78,7 @@ class FixUpProApp extends StatelessWidget {
             const PaymentDetailPage(), // Payment Detail
         '/payment-success': (context) => const PaymentSuccessPage(),
         '/ratingDashboard': (context) => const RatingDashboardPage(),
-        '/foremanList': (context) => const ForemanListPage()
+        '/foremanList': (context) => const ForemanListPage(),
 
         //Manage Working Schedule
         '/foremanWorkList': (context) => const ForemanWorkListPage(),
