@@ -4,9 +4,11 @@ import '../../domain/paymentModel/payment.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:slide_to_act/slide_to_act.dart';
 
 class AddPaymentPage extends StatefulWidget {
-  const AddPaymentPage({super.key});
+  final Payment? payment;
+  const AddPaymentPage({super.key, this.payment});
 
   @override
   _AddPaymentPageState createState() => _AddPaymentPageState();
@@ -40,6 +42,28 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   void initState() {
     super.initState();
     _fetchForemen();
+    if (widget.payment != null) {
+      _amountController.text = widget.payment!.amount.toStringAsFixed(2);
+      _descriptionController.text = widget.payment!.description ?? '';
+      _startTimeController.text = widget.payment!.startTime ?? '';
+      _endTimeController.text = widget.payment!.endTime ?? '';
+      _selectedStatus = widget.payment!.status;
+
+      // Ensure the payment method from the payment object is in the list of valid methods
+      final String? paymentMethodFromPayment =
+          widget.payment!.paymentMethod?.trim();
+      if (paymentMethodFromPayment != null) {
+        final matchedMethod = _paymentMethods.firstWhere(
+          (method) => method == paymentMethodFromPayment,
+          orElse: () => 'Cash', // Default if not found in list
+        );
+        _selectedPaymentMethod = matchedMethod;
+      } else {
+        _selectedPaymentMethod = 'Cash'; // Fallback if paymentMethod is null
+      }
+      _selectedDate = widget.payment!.date ?? DateTime.now();
+      _selectedForemanName = widget.payment!.name;
+    }
   }
 
   @override
@@ -132,25 +156,49 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
         final amount = double.parse(_amountController.text.replaceAll(',', ''));
 
-        await _paymentService.addPayment(
-          userId: userId,
-          amount: amount,
-          status: _selectedStatus,
-          description: _descriptionController.text,
-          paymentMethod: _selectedPaymentMethod,
-          startTime: _startTimeController.text,
-          endTime: _endTimeController.text,
-          date: _selectedDate,
-          name: _selectedForemanName,
-          role: 'Foreman',
-        );
+        if (widget.payment == null) {
+          // Add new payment
+          await _paymentService.addPayment(
+            userId: userId,
+            amount: amount,
+            status: _selectedStatus,
+            description: _descriptionController.text,
+            paymentMethod: _selectedPaymentMethod,
+            startTime: _startTimeController.text,
+            endTime: _endTimeController.text,
+            date: _selectedDate,
+            name: _selectedForemanName,
+            role: 'Foreman',
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Payment added successfully')),
+            );
+          }
+        } else {
+          // Update existing payment
+          await _paymentService.updatePayment(
+            paymentId: widget.payment!.id,
+            amount: amount,
+            status: _selectedStatus,
+            description: _descriptionController.text,
+            paymentMethod: _selectedPaymentMethod,
+            startTime: _startTimeController.text,
+            endTime: _endTimeController.text,
+            date: _selectedDate,
+            name: _selectedForemanName,
+            role: 'Foreman',
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Payment updated successfully')),
+            );
+          }
+        }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Payment added successfully')),
-          );
           Navigator.pop(
-              context, true); // Pass true to indicate successful addition
+              context, true); // Pass true to indicate successful operation
         }
       } catch (e) {
         if (mounted) {
@@ -310,9 +358,107 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       maxLines: 3,
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _submitForm,
-                      child: const Text('Add Payment'),
+                    // Pay using section
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              // Placeholder for Google Pay icon
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.blueGrey[50],
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child:
+                                    Image.asset('assets/images/DuitNow1.jpg'),
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Pay using',
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.grey),
+                                  ),
+                                  Text(
+                                    _selectedPaymentMethod, // Dynamically display selected payment method
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () {
+                                  // TODO: Implement change payment method functionality
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Change payment method coming soon!')),
+                                  );
+                                },
+                                child: const Text(
+                                  'Change >',
+                                  style: TextStyle(
+                                      color: Colors.orange, fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Slide to Pay button using slide_to_act package
+                    Builder(
+                      builder: (context) {
+                        final GlobalKey<SlideActionState> _key = GlobalKey();
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SlideAction(
+                            key: _key,
+                            outerColor: Colors.green,
+                            innerColor: Colors.white,
+                            height: 60,
+                            borderRadius: 30,
+                            elevation: 0,
+                            sliderButtonIcon: const Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.green,
+                            ),
+                            text:
+                                'Slide to Pay | RM${_amountController.text.isNotEmpty ? double.parse(_amountController.text.replaceAll(',', '')).toStringAsFixed(2) : '0.00'}',
+                            textStyle: const TextStyle(
+                                color: Colors.white, fontSize: 18),
+                            onSubmit: () {
+                              _submitForm();
+                              // Reset the slider after submission, optionally with a delay
+                              Future.delayed(const Duration(milliseconds: 500),
+                                  () => _key.currentState?.reset());
+                            },
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
