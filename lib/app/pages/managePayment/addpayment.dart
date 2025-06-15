@@ -1,46 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/payment_service.dart';
+import '../../domain/paymentModel/payment.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class AddPaymentPage extends StatefulWidget {
   const AddPaymentPage({super.key});
 
   @override
-  State<AddPaymentPage> createState() => _AddPaymentPageState();
+  _AddPaymentPageState createState() => _AddPaymentPageState();
 }
 
 class _AddPaymentPageState extends State<AddPaymentPage> {
   final _formKey = GlobalKey<FormState>();
-  final _paymentService = PaymentService();
-  bool _isLoading = false;
-
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _timeController = TextEditingController();
   final _startTimeController = TextEditingController();
   final _endTimeController = TextEditingController();
-  String _selectedPaymentMethod = 'Cash';
-  TimeOfDay? _selectedStartTime;
-  TimeOfDay? _selectedEndTime;
-  String? _selectedForemanName;
-  List<String> _foremanNames = [];
-  bool _isForemanLoading = true;
-  String _selectedStatus = 'Unpaid';
-  final List<String> _statusOptions = [
-    'Unpaid',
-    'Paid',
-  ];
+  final _paymentService = PaymentService();
 
+  String _selectedStatus = 'Unpaid';
+  String _selectedPaymentMethod = 'Cash';
+  DateTime _selectedDate = DateTime.now();
+  String? _selectedForemanName;
+  bool _isLoading = false;
+  bool _isForemanLoading = true;
+  List<String> _foremanNames = [];
+
+  final List<String> _statusOptions = ['Paid', 'Unpaid'];
   final List<String> _paymentMethods = [
     'Cash',
-    'Credit Card',
-    'Debit Card',
+    'Credit/Debit Card',
+    'Online Banking',
     'Bank Transfer',
-    'Mobile Payment',
   ];
 
   @override
@@ -53,59 +46,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   void dispose() {
     _amountController.dispose();
     _descriptionController.dispose();
-    _timeController.dispose();
     _startTimeController.dispose();
     _endTimeController.dispose();
     super.dispose();
-  }
-
-  String _formatCurrency(String value) {
-    if (value.isEmpty) return '';
-    final number = double.tryParse(value.replaceAll(',', ''));
-    if (number == null) return '';
-    final formatter = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
-    return formatter.format(number);
-  }
-
-  void _onAmountChanged() {
-    final text = _amountController.text.replaceAll(',', '');
-    if (text.isEmpty) return;
-    final number = double.tryParse(text);
-    if (number == null) return;
-    final newText =
-        NumberFormat.currency(symbol: '', decimalDigits: 2).format(number);
-    if (_amountController.text != newText) {
-      _amountController.value = TextEditingValue(
-        text: newText,
-        selection: TextSelection.collapsed(offset: newText.length),
-      );
-    }
-  }
-
-  Future<void> _pickStartTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedStartTime ?? TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        _selectedStartTime = picked;
-        _startTimeController.text = picked.format(context);
-      });
-    }
-  }
-
-  Future<void> _pickEndTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedEndTime ?? TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        _selectedEndTime = picked;
-        _endTimeController.text = picked.format(context);
-      });
-    }
   }
 
   Future<void> _fetchForemen() async {
@@ -129,144 +72,98 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       setState(() {
         _isForemanLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading foremen: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading foremen: $e')),
+        );
+      }
     }
   }
 
-  Future<bool?> _showConfirmDialog() {
-    return showDialog<bool>(
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
       context: context,
-      builder: (context) {
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.payment, size: 80, color: Colors.teal),
-                const SizedBox(height: 16),
-                const Text('Confirm Payment',
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text('Amount:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    Text('RM${_amountController.text}',
-                        style: const TextStyle(fontSize: 18)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('Payment Method:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    Text(_selectedPaymentMethod),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('Foreman:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    Text(_selectedForemanName ?? ''),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('Time:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    Text(
-                        '${_startTimeController.text} - ${_endTimeController.text}'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('Status:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 8),
-                    Text(_selectedStatus),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Confirm'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
     );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _pickStartTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _startTimeController.text = picked.format(context);
+      });
+    }
+  }
+
+  Future<void> _pickEndTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _endTimeController.text = picked.format(context);
+      });
+    }
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
 
-    final confirmed = await _showConfirmDialog();
-    if (confirmed != true) return;
+      try {
+        final userId = FirebaseAuth.instance.currentUser?.uid;
+        if (userId == null) {
+          throw Exception('User not logged in');
+        }
 
-    setState(() {
-      _isLoading = true;
-    });
+        final amount = double.parse(_amountController.text.replaceAll(',', ''));
 
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) throw Exception('User not authenticated');
-
-      await _paymentService.addPayment(
-        userId: userId,
-        amount: double.parse(_amountController.text.replaceAll(',', '')),
-        status: _selectedStatus,
-        description: _descriptionController.text,
-        paymentMethod: _selectedPaymentMethod,
-        name: _selectedForemanName ?? '',
-        role: 'Foreman',
-        time: '${_startTimeController.text} - ${_endTimeController.text}',
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment added successfully')),
+        await _paymentService.addPayment(
+          userId: userId,
+          amount: amount,
+          status: _selectedStatus,
+          description: _descriptionController.text,
+          paymentMethod: _selectedPaymentMethod,
+          startTime: _startTimeController.text,
+          endTime: _endTimeController.text,
+          date: _selectedDate,
+          name: _selectedForemanName,
+          role: 'Foreman',
         );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adding payment: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment added successfully')),
+          );
+          Navigator.pop(
+              context, true); // Pass true to indicate successful addition
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error adding payment: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -288,7 +185,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       controller: _amountController,
                       decoration: const InputDecoration(
                         labelText: 'Amount',
-                        prefixText: '\$',
+                        prefixText: 'RM',
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -301,7 +198,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                         }
                         return null;
                       },
-                      onChanged: (_) => _onAmountChanged(),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
@@ -350,39 +246,39 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                             },
                           ),
                     const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: _pickStartTime,
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: _startTimeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Start Time',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the start time';
-                            }
-                            return null;
-                          },
-                        ),
+                    ListTile(
+                      title: Text(_selectedDate == null
+                          ? 'Select Date'
+                          : DateFormat('yyyy-MM-dd').format(_selectedDate!)),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: _pickDate,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: BorderSide(color: Colors.grey.shade400),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    GestureDetector(
+                    ListTile(
+                      title: Text(_startTimeController.text.isEmpty
+                          ? 'Select Start Time'
+                          : _startTimeController.text),
+                      trailing: const Icon(Icons.access_time),
+                      onTap: _pickStartTime,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: BorderSide(color: Colors.grey.shade400),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: Text(_endTimeController.text.isEmpty
+                          ? 'Select End Time'
+                          : _endTimeController.text),
+                      trailing: const Icon(Icons.access_time),
                       onTap: _pickEndTime,
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: _endTimeController,
-                          decoration: const InputDecoration(
-                            labelText: 'End Time',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the end time';
-                            }
-                            return null;
-                          },
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: BorderSide(color: Colors.grey.shade400),
                       ),
                     ),
                     const SizedBox(height: 16),

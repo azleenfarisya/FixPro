@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'app/theme/app_theme.dart';
+import 'app/domain/paymentModel/payment.dart';
 
 import 'app/pages/manageRegistration/firstPage.dart';
 import 'app/pages/manageRegistration/loginForm.dart';
@@ -72,10 +73,14 @@ class FixUpProApp extends StatelessWidget {
         '/importParts': (context) => const ImportPartsPage(), // Import Parts
         '/findWorkshop': (context) => const FindWorkshopPage(), // Find Workshop
         '/addPayment': (context) => const AddPaymentPage(), // Add Payment
-        '/updatePayment': (context) =>
-            const UpdatePaymentPage(), // Update Payment
-        '/paymentDetail': (context) =>
-            const PaymentDetailPage(), // Payment Detail
+        '/updatePayment': (context) {
+          final payment = ModalRoute.of(context)!.settings.arguments as Payment;
+          return UpdatePaymentPage(payment: payment);
+        },
+        '/paymentDetail': (context) {
+          final payment = ModalRoute.of(context)!.settings.arguments as Payment;
+          return PaymentDetailPage(payment: payment);
+        },
         '/payment-success': (context) => const PaymentSuccessPage(),
         '/ratingDashboard': (context) => const RatingDashboardPage(),
         '/foremanList': (context) => const ForemanListPage(),

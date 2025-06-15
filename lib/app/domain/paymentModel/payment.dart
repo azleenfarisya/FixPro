@@ -11,7 +11,8 @@ class Payment {
   final String? transactionId;
   final String? name;
   final String? role;
-  final String? time;
+  final String? startTime;
+  final String? endTime;
 
   Payment({
     required this.id,
@@ -24,7 +25,8 @@ class Payment {
     this.transactionId,
     this.name,
     this.role,
-    this.time,
+    this.startTime,
+    this.endTime,
   });
 
   factory Payment.fromMap(Map<String, dynamic> data) {
@@ -41,7 +43,8 @@ class Payment {
       transactionId: data['transactionId'],
       name: data['name'],
       role: data['role'],
-      time: data['time'],
+      startTime: data['startTime'],
+      endTime: data['endTime'],
     );
   }
 
@@ -57,7 +60,8 @@ class Payment {
       'transactionId': transactionId,
       'name': name,
       'role': role,
-      'time': time,
+      'startTime': startTime,
+      'endTime': endTime,
     };
   }
-} 
+}

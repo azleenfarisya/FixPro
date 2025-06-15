@@ -30,7 +30,9 @@ class PaymentService {
     String? paymentMethod,
     String? name,
     String? role,
-    String? time,
+    String? startTime,
+    String? endTime,
+    DateTime? date,
   }) async {
     final paymentData = {
       'userId': userId,
@@ -40,8 +42,9 @@ class PaymentService {
       'paymentMethod': paymentMethod,
       'name': name,
       'role': role,
-      'time': time,
-      'date': FieldValue.serverTimestamp(),
+      'startTime': startTime,
+      'endTime': endTime,
+      'date': date ?? FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -60,15 +63,25 @@ class PaymentService {
     required String status,
     String? description,
     String? paymentMethod,
-    String? transactionId,
     String? name,
     String? role,
-    String? time,
+    String? startTime,
+    String? endTime,
+    DateTime? date,
   }) async {
     final paymentRef = _firestore.collection('payments').doc(paymentId);
     print('DEBUG: Updating payment $paymentId with status $status');
     await paymentRef.update({
+      'amount': amount,
       'status': status,
+      'description': description,
+      'paymentMethod': paymentMethod,
+      'name': name,
+      'role': role,
+      'startTime': startTime,
+      'endTime': endTime,
+      'date': date,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -94,7 +107,9 @@ class PaymentService {
             payment.status.toLowerCase().contains(query.toLowerCase()) ||
             (payment.description?.toLowerCase().contains(query.toLowerCase()) ??
                 false) ||
-            (payment.paymentMethod?.toLowerCase().contains(query.toLowerCase()) ??
+            (payment.paymentMethod
+                    ?.toLowerCase()
+                    .contains(query.toLowerCase()) ??
                 false))
         .toList();
   }
@@ -142,4 +157,4 @@ class PaymentService {
         .map((doc) => Payment.fromMap({...doc.data(), 'id': doc.id}))
         .toList();
   }
-} 
+}

@@ -72,17 +72,9 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
 
   @override
   Widget build(BuildContext context) {
-    String formatTime(String? timeStr) {
-      if (timeStr == null || timeStr.isEmpty) return '';
-      try {
-        // Try to parse as DateTime
-        final dt = DateTime.tryParse(timeStr);
-        if (dt != null) {
-          return DateFormat('hh:mm a').format(dt);
-        }
-      } catch (_) {}
-      // If not parseable, return as is
-      return timeStr;
+    String formatTime(String? startTime, String? endTime) {
+      if (startTime == null || endTime == null) return '';
+      return '$startTime - $endTime';
     }
 
     final isForeman = _currentUserRole == 'Foreman';
@@ -102,8 +94,12 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
           if (_currentUserRole == 'Owner')
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {
-                Navigator.pushNamed(context, '/addPayment');
+              onPressed: () async {
+                final result =
+                    await Navigator.pushNamed(context, '/addPayment');
+                if (result == true) {
+                  _loadPayments();
+                }
               },
             ),
         ],
@@ -118,6 +114,43 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (!isForeman) ...[
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Payment Summary',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _buildSummaryCard(
+                                        'Total Paid',
+                                        'RM${_calculateTotalPaid(filteredPayments).toStringAsFixed(2)}',
+                                        const Color(0xFF4CAF50),
+                                      ),
+                                      _buildSummaryCard(
+                                        'Pending',
+                                        'RM${_calculateTotalUnpaid(filteredPayments).toStringAsFixed(2)}',
+                                        const Color(0xFFFFA000),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                         const Text(
                           'Paid Jobs',
                           style: TextStyle(
@@ -130,13 +163,26 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
                                   child: ListTile(
                                     leading: const Icon(Icons.check_circle,
                                         color: Colors.green),
-                                    title: Text(payment.name ?? ''),
-                                    subtitle: Text(formatTime(payment.time)),
+                                    title: Text(
+                                      isForeman
+                                          ? 'FPS-${payment.id.substring(0, 8)}'
+                                          : payment.name ?? '',
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(DateFormat('yyyy-MM-dd')
+                                            .format(payment.date)),
+                                        Text(formatTime(payment.startTime,
+                                            payment.endTime)),
+                                      ],
+                                    ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          payment.amount.toStringAsFixed(2),
+                                          'RM${payment.amount.toStringAsFixed(2)}',
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold),
                                         ),
@@ -147,8 +193,6 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
                                                 color: Colors.blue),
                                             tooltip: 'Edit',
                                             onPressed: () async {
-                                              print(
-                                                  'Editing payment: id=${payment.id}, status=${payment.status}, name=${payment.name}');
                                               final result =
                                                   await Navigator.pushNamed(
                                                 context,
@@ -156,7 +200,7 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
                                                 arguments: payment,
                                               );
                                               if (result == true) {
-                                                _loadPayments();
+                                                await _loadPayments();
                                               }
                                             },
                                           ),
@@ -189,13 +233,26 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
                                   child: ListTile(
                                     leading: const Icon(Icons.hourglass_empty,
                                         color: Colors.orange),
-                                    title: Text(payment.name ?? ''),
-                                    subtitle: Text(formatTime(payment.time)),
+                                    title: Text(
+                                      isForeman
+                                          ? 'FPS-${payment.id.substring(0, 8)}'
+                                          : payment.name ?? '',
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(DateFormat('yyyy-MM-dd')
+                                            .format(payment.date)),
+                                        Text(formatTime(payment.startTime,
+                                            payment.endTime)),
+                                      ],
+                                    ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          payment.amount.toStringAsFixed(2),
+                                          'RM${payment.amount.toStringAsFixed(2)}',
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold),
                                         ),
@@ -213,7 +270,7 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
                                                 arguments: payment,
                                               );
                                               if (result == true) {
-                                                _loadPayments();
+                                                await _loadPayments();
                                               }
                                             },
                                           ),
@@ -238,5 +295,50 @@ class _PaymentInterfaceState extends State<PaymentInterface> {
                   ),
                 ),
     );
+  }
+
+  Widget _buildSummaryCard(String title, String amount, Color color) {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.grey.withOpacity(0.3),
+      color: Colors.white,
+      child: Container(
+        width: 150,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: color.withOpacity(0.8),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              amount,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  double _calculateTotalPaid(List<Payment> payments) {
+    return payments
+        .where((p) => p.status == 'Paid')
+        .fold(0, (sum, p) => sum + p.amount);
+  }
+
+  double _calculateTotalUnpaid(List<Payment> payments) {
+    return payments
+        .where((p) => p.status == 'Unpaid')
+        .fold(0, (sum, p) => sum + p.amount);
   }
 }

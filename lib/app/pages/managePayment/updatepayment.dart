@@ -8,7 +8,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 
 class UpdatePaymentPage extends StatefulWidget {
-  const UpdatePaymentPage({super.key});
+  final Payment payment;
+
+  const UpdatePaymentPage({super.key, required this.payment});
 
   @override
   State<UpdatePaymentPage> createState() => _UpdatePaymentPageState();
@@ -19,29 +21,44 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
   final _paymentService = PaymentService();
   bool _isLoading = false;
 
-  final _amountController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _timeController = TextEditingController();
-  String _selectedPaymentMethod = 'Cash';
-  String _selectedStatus = 'Unpaid';
-  TimeOfDay? _selectedTime;
+  late String _selectedStatus;
+  late TextEditingController _amountController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _startTimeController;
+  late TextEditingController _endTimeController;
+  late String _selectedPaymentMethod;
+  late String? _selectedForemanName;
+  late DateTime _selectedDate;
   String? _currentUserRole;
 
-  final List<String> _paymentMethods = [
-    'Cash',
-    'QR',
-    'Transfer Account',
-  ];
   final List<String> _statusOptions = [
     'Unpaid',
     'Paid',
+  ];
+
+  final List<String> _paymentMethods = [
+    'Cash',
+    'Credit Card',
+    'Debit Card',
+    'Bank Transfer',
+    'Mobile Payment',
   ];
 
   @override
   void initState() {
     super.initState();
     _fetchCurrentUserRole();
+    _selectedStatus = widget.payment.status;
+    _amountController =
+        TextEditingController(text: widget.payment.amount.toString());
+    _descriptionController =
+        TextEditingController(text: widget.payment.description);
+    _startTimeController =
+        TextEditingController(text: widget.payment.startTime);
+    _endTimeController = TextEditingController(text: widget.payment.endTime);
+    _selectedPaymentMethod = widget.payment.paymentMethod ?? 'Cash';
+    _selectedForemanName = widget.payment.name;
+    _selectedDate = widget.payment.date;
   }
 
   Future<void> _fetchCurrentUserRole() async {
@@ -67,115 +84,128 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
   void dispose() {
     _amountController.dispose();
     _descriptionController.dispose();
-    _nameController.dispose();
-    _timeController.dispose();
+    _startTimeController.dispose();
+    _endTimeController.dispose();
     super.dispose();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final payment = ModalRoute.of(context)!.settings.arguments as Payment;
-    _amountController.text = payment.amount.toStringAsFixed(2);
-    _descriptionController.text = payment.description ?? '';
-    _nameController.text = payment.name ?? '';
-    _timeController.text = payment.time ?? '';
-    _selectedPaymentMethod = _paymentMethods.contains(payment.paymentMethod)
-        ? payment.paymentMethod!
-        : _paymentMethods.first;
-    _selectedStatus = _statusOptions.contains(payment.status)
-        ? payment.status
-        : _statusOptions.first;
-  }
-
-  Future<void> _pickTime() async {
+  Future<void> _pickStartTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
+      initialTime: TimeOfDay.now(),
     );
     if (picked != null) {
       setState(() {
-        _selectedTime = picked;
-        _timeController.text = picked.format(context);
+        _startTimeController.text = picked.format(context);
       });
     }
   }
 
-  Future<void> _submitForm(Payment payment) async {
-    if (!_formKey.currentState!.validate()) return;
-    if (payment.id.isEmpty) {
-      print('ERROR: Payment id is missing!');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment cannot be updated: missing ID')),
-      );
-      return;
+  Future<void> _pickEndTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _endTimeController.text = picked.format(context);
+      });
     }
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      print(
-          'Updating payment with id: \\${payment.id} and status: \\$_selectedStatus');
-      await _paymentService.updatePayment(
-        paymentId: payment.id,
-        amount: double.parse(_amountController.text.replaceAll(',', '')),
-        status: _selectedStatus,
-        description: _descriptionController.text,
-        paymentMethod: _selectedPaymentMethod,
-        name: _nameController.text,
-        time: _timeController.text,
-      );
-      print('Payment updated!');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment updated successfully')),
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await _paymentService.updatePayment(
+          paymentId: widget.payment.id,
+          amount: double.parse(_amountController.text),
+          status: _selectedStatus,
+          description: _descriptionController.text,
+          paymentMethod: _selectedPaymentMethod,
+          name: _selectedForemanName,
+          role: 'Foreman',
+          startTime: _startTimeController.text,
+          endTime: _endTimeController.text,
+          date: _selectedDate,
         );
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating payment: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment updated successfully')),
+          );
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating payment: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
 
   Future<void> _deletePayment(Payment payment) async {
-    final confirm = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Payment'),
-        content: const Text('Are you sure you want to delete this payment?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Payment'),
+          content: const Text('Are you sure you want to delete this payment?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
-    if (confirm == true) {
+
+    if (confirmed == true) {
       setState(() {
         _isLoading = true;
       });
+
       try {
         await _paymentService.deletePayment(payment.id);
         if (mounted) {
-          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Payment deleted successfully')),
           );
+          Navigator.pop(context, true); // Pass true to indicate deletion
         }
       } catch (e) {
         if (mounted) {
@@ -184,17 +214,17 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
           );
         }
       } finally {
-        if (mounted)
+        if (mounted) {
           setState(() {
             _isLoading = false;
           });
+        }
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final payment = ModalRoute.of(context)!.settings.arguments as Payment;
     return Scaffold(
       appBar: AppBar(title: const Text('Update Payment')),
       body: _isLoading
@@ -206,27 +236,68 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Foreman',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _selectedForemanName ?? 'N/A',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _amountController,
                       decoration: const InputDecoration(
                         labelText: 'Amount',
                         prefixText: 'RM',
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^[0-9]*\.?[0-9]*')),
-                      ],
+                      keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter an amount';
                         }
-                        if (double.tryParse(value.replaceAll(',', '')) ==
-                            null) {
+                        if (double.tryParse(value) == null) {
                           return 'Please enter a valid number';
                         }
                         return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedStatus,
+                      decoration: const InputDecoration(
+                        labelText: 'Status',
+                      ),
+                      items: _statusOptions.map((String status) {
+                        return DropdownMenuItem<String>(
+                          value: status,
+                          child: Text(status),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedStatus = newValue;
+                          });
+                        }
                       },
                     ),
                     const SizedBox(height: 16),
@@ -250,34 +321,38 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Foreman Name',
+                    ListTile(
+                      title:
+                          Text(DateFormat('yyyy-MM-dd').format(_selectedDate)),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: _pickDate,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: BorderSide(color: Colors.grey.shade400),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter the foreman\'s name';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: _pickTime,
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: _timeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Time',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the time';
-                            }
-                            return null;
-                          },
-                        ),
+                    ListTile(
+                      title: Text(_startTimeController.text.isEmpty
+                          ? 'Select Start Time'
+                          : _startTimeController.text),
+                      trailing: const Icon(Icons.access_time),
+                      onTap: _pickStartTime,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: BorderSide(color: Colors.grey.shade400),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      title: Text(_endTimeController.text.isEmpty
+                          ? 'Select End Time'
+                          : _endTimeController.text),
+                      trailing: const Icon(Icons.access_time),
+                      onTap: _pickEndTime,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: BorderSide(color: Colors.grey.shade400),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -288,41 +363,20 @@ class _UpdatePaymentPageState extends State<UpdatePaymentPage> {
                       ),
                       maxLines: 3,
                     ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _selectedStatus,
-                      decoration: const InputDecoration(
-                        labelText: 'Status',
-                      ),
-                      items: _statusOptions.map((String status) {
-                        return DropdownMenuItem<String>(
-                          value: status,
-                          child: Text(status),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedStatus = newValue;
-                          });
-                        }
-                      },
-                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: () => _submitForm(payment),
+                      onPressed: _submitForm,
                       child: const Text('Update Payment'),
                     ),
                     const SizedBox(height: 16),
-                    if (_currentUserRole == 'Owner')
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () => _deletePayment(payment),
-                        child: const Text('Delete Payment'),
+                    ElevatedButton(
+                      onPressed: () => _deletePayment(widget.payment),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
                       ),
+                      child: const Text('Delete Payment'),
+                    ),
                   ],
                 ),
               ),
