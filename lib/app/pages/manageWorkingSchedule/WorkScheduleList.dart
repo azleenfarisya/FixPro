@@ -7,6 +7,7 @@ import 'package:fix_pro/app/pages/manageWorkingSchedule/AddWorkingTime.dart'
     as working_time;
 //import 'package:fix_pro/app/pages/manageWorkingSchedule/AddWorkDetails.dart'; // keep this if you also use it elsewhere
 import 'package:fix_pro/app/pages/manageWorkingSchedule/AddWorkDetails.dart';
+import 'package:fix_pro/app/pages/manageRating/addRating.dart';
 
 class OwnerCalendarPage extends StatefulWidget {
   const OwnerCalendarPage({super.key});
@@ -82,6 +83,8 @@ class _OwnerCalendarPageState extends State<OwnerCalendarPage> {
       itemCount: availableForemen.length,
       itemBuilder: (context, index) {
         final foreman = availableForemen[index];
+        final isCompleted =
+            (foreman['status'] ?? '').toString().toLowerCase() == 'completed';
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: ListTile(
@@ -115,22 +118,50 @@ class _OwnerCalendarPageState extends State<OwnerCalendarPage> {
                   ),
               ],
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              if (selectedDate != null) {
-                Navigator.pushNamed(
-                  context,
-                  '/addWorkDetails',
-                  arguments: {
-                    'foremanName': foreman["foreman_name"] ?? "",
-                    'selectedDate': selectedDate!,
-                    'startTime': foreman["start_time"] ?? "",
-                    'endTime': foreman["end_time"] ?? "",
-                    'scheduleId': foreman["id"] ?? "",
+            trailing: isCompleted
+                ? ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddRatingPage(
+                            jobId: foreman['id'] ?? '',
+                            foremanId: foreman['foreman_id'] ?? '',
+                            ownerId: foreman['owner_id'] ?? '',
+                            foremanName: foreman['foreman_name'] ?? '',
+                            jobTitle: foreman['job_assignment'] ?? '',
+                            foremanImageUrl:
+                                'assets/images/default_profile.png', // Placeholder
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber[700],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Rate'),
+                  )
+                : const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: isCompleted
+                ? null
+                : () {
+                    if (selectedDate != null) {
+                      Navigator.pushNamed(
+                        context,
+                        '/addWorkDetails',
+                        arguments: {
+                          'foremanName': foreman["foreman_name"] ?? "",
+                          'selectedDate': selectedDate!,
+                          'startTime': foreman["start_time"] ?? "",
+                          'endTime': foreman["end_time"] ?? "",
+                          'scheduleId': foreman["id"] ?? "",
+                        },
+                      ).then((_) => _fetchForemen(selectedDate!));
+                    }
                   },
-                ).then((_) => _fetchForemen(selectedDate!));
-              }
-            },
           ),
         );
       },

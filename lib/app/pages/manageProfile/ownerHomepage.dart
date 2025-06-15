@@ -1,3 +1,4 @@
+import 'package:fix_pro/app/pages/manageWorkingSchedule/WorkScheduleList.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -127,7 +128,7 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ForemanWorkListPage(),
+                      builder: (context) => const OwnerCalendarPage(),
                     ),
                   );
                 },
@@ -172,7 +173,7 @@ class _OwnerHomePageState extends State<OwnerHomePage> {
           index: _selectedIndex,
           children: [
             const Center(child: Text('Home')),
-            const ForemanWorkListPage(),
+            const OwnerCalendarPage(),
             const InventoryListPage(),
             const PaymentInterface(),
             RatingDashboardPage(ownerId: _auth.currentUser?.uid ?? ''),

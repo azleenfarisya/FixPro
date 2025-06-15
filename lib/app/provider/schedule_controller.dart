@@ -29,6 +29,7 @@ class ScheduleController extends ChangeNotifier {
       _schedules = await _schedule.getSchedulesByDate(date);
     } catch (e) {
       _error = e.toString();
+      _schedules = []; // Clear schedules on error
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -36,7 +37,7 @@ class ScheduleController extends ChangeNotifier {
   }
 
   // Create a new schedule
-  Future<void> createSchedule(ScheduleModel schedule) async {
+  Future<bool> createSchedule(ScheduleModel schedule) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -44,8 +45,10 @@ class ScheduleController extends ChangeNotifier {
     try {
       await _schedule.createSchedule(schedule);
       await fetchSchedulesByDate(schedule.date);
+      return true;
     } catch (e) {
       _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -53,7 +56,7 @@ class ScheduleController extends ChangeNotifier {
   }
 
   // Update an existing schedule
-  Future<void> updateSchedule(ScheduleModel schedule) async {
+  Future<bool> updateSchedule(ScheduleModel schedule) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -61,8 +64,10 @@ class ScheduleController extends ChangeNotifier {
     try {
       await _schedule.updateSchedule(schedule);
       await fetchSchedulesByDate(schedule.date);
+      return true;
     } catch (e) {
       _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -70,7 +75,7 @@ class ScheduleController extends ChangeNotifier {
   }
 
   // Delete a schedule
-  Future<void> deleteSchedule(String id, String date) async {
+  Future<bool> deleteSchedule(String id, String date) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -78,8 +83,10 @@ class ScheduleController extends ChangeNotifier {
     try {
       await _schedule.deleteSchedule(id);
       await fetchSchedulesByDate(date);
+      return true;
     } catch (e) {
       _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -87,7 +94,7 @@ class ScheduleController extends ChangeNotifier {
   }
 
   // Update job status
-  Future<void> updateJobStatus(String id, String status, String date) async {
+  Future<bool> updateJobStatus(String id, String status, String date) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -95,8 +102,10 @@ class ScheduleController extends ChangeNotifier {
     try {
       await _schedule.updateJobStatus(id, status);
       await fetchSchedulesByDate(date);
+      return true;
     } catch (e) {
       _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -104,7 +113,7 @@ class ScheduleController extends ChangeNotifier {
   }
 
   // Add job details
-  Future<void> addJobDetails({
+  Future<bool> addJobDetails({
     required String id,
     required String date,
     required String vehicleName,
@@ -125,17 +134,50 @@ class ScheduleController extends ChangeNotifier {
         jobAssignment: jobAssignment,
       );
       await fetchSchedulesByDate(date);
+      return true;
     } catch (e) {
       _error = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  // Check if a foreman has a schedule for a specific date
+  Future<bool> hasScheduleForDate(String foremanName, String date) async {
+    try {
+      final schedules = await _schedule.getSchedulesByDate(date);
+      return schedules.any((schedule) => schedule.foremanName == foremanName);
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    }
+  }
+
+  // Get available foremen for a specific date
+  Future<List<String>> getAvailableForemen(String date) async {
+    try {
+      final schedules = await _schedule.getSchedulesByDate(date);
+      return schedules
+          .where((schedule) => schedule.status == 'available')
+          .map((schedule) => schedule.foremanName)
+          .toList();
+    } catch (e) {
+      _error = e.toString();
+      return [];
+    }
+  }
+
   // Clear error
   void clearError() {
     _error = null;
+    notifyListeners();
+  }
+
+  // Clear schedules
+  void clearSchedules() {
+    _schedules = [];
     notifyListeners();
   }
 }

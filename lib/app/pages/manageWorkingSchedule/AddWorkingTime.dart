@@ -78,21 +78,6 @@ class _AddWorkingTimePageState extends State<AddWorkingTimePage> {
           "${selectedDate!.month.toString().padLeft(2, '0')}-"
           "${selectedDate!.day.toString().padLeft(2, '0')}";
 
-      // Check for existing schedule on the same date
-      final existingSchedule = await FirebaseFirestore.instance
-          .collection("working_schedules")
-          .where("foreman_name", isEqualTo: widget.foremanName)
-          .where("date", isEqualTo: formattedDate)
-          .get();
-
-      if (existingSchedule.docs.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("You already have a schedule for this date")),
-        );
-        return;
-      }
-
       await FirebaseFirestore.instance.collection("working_schedules").add({
         "date": formattedDate,
         "start_time": startTime!.format(context),
