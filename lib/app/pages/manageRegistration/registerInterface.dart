@@ -59,13 +59,25 @@ class _RegistrationPageState extends State<RegistrationPage> {
             key: _formKey,
             child: Column(
               children: [
-                const Icon(Icons.settings, size: 40, color: Colors.blueGrey),
-                const Text(
-                  "FixUp Pro",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.settings, size: 40, color: Colors.blueGrey),
+                    SizedBox(width: 10),
+                    Text(
+                      "FixUp Pro",
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 Image.asset('assets/images/registration.png', height: 150),
+                const SizedBox(height: 10),
+                const Text(
+                  "Create an Account",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _name,
                   decoration: const InputDecoration(

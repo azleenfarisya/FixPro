@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
+import '../manageWorkingSchedule/WorkScheduleList.dart';
+import '../manageInventory/inventoryList.dart';
+import '../managePayment/paymentinterface.dart';
+import '../manageRating/ratingDashboard.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -19,9 +23,15 @@ class _ProfilePageState extends State<ProfilePage> {
   String? address;
   String? icNumber;
   String? gender;
-  String? imagePath; // local file path
-
+  String? imagePath;
+  int _selectedIndex = 0;
   bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
 
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -41,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
           address = data['address'];
           icNumber = data['ic'];
           gender = data['gender'];
-          imagePath = data['imagePath']; // get local path
+          imagePath = data['imagePath'];
           isLoading = false;
         });
       }
@@ -50,25 +60,53 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _navigateToEditProfile() {
     Navigator.pushNamed(context, '/editProfile').then((_) {
-      // Reload profile data after coming back from edit page
       _loadUserData();
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pop(context);
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OwnerCalendarPage()),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const InventoryListPage()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PaymentInterface()),
+      );
+    } else if (index == 4) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              RatingDashboardPage(userRole: (role ?? 'owner').toLowerCase()),
+        ),
+      );
+    }
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeColor = AppTheme.getRoleColor(role ?? 'Owner');
+
     return Theme(
       data: AppTheme.getTheme(role ?? 'Owner'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('My Profile'),
-          automaticallyImplyLeading: false,
+          backgroundColor: themeColor,
+          title: const Text('FixUp Pro'),
+          centerTitle: true,
         ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -77,14 +115,24 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Text(
+                        "My Profile",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: themeColor,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     Center(
                       child: Column(
                         children: [
                           CircleAvatar(
                             radius: 50,
-                            backgroundColor:
-                                AppTheme.getRoleColor(role ?? 'Owner'),
+                            backgroundColor: themeColor,
                             backgroundImage: (imagePath != null &&
                                     File(imagePath!).existsSync())
                                 ? FileImage(File(imagePath!))
@@ -117,6 +165,21 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          elevation: 8,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Schedule'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.inventory), label: 'Inventory'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.payment), label: 'Payments'),
+            BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rating'),
+          ],
+        ),
       ),
     );
   }

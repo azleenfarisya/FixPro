@@ -4,6 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/app_theme.dart';
+import '../manageWorkingSchedule/WorkScheduleList.dart';
+import '../manageInventory/inventoryList.dart';
+import '../managePayment/paymentinterface.dart';
+import '../manageRating/ratingDashboard.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -23,6 +27,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   File? _imageFile;
   String? _imagePath;
   bool _isLoading = true;
+  int _selectedIndex = 0;
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -93,6 +98,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pop(context); // back to OwnerHomePage
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OwnerCalendarPage()),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const InventoryListPage()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PaymentInterface()),
+      );
+    } else if (index == 4) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RatingDashboardPage(userRole: _role.toLowerCase()),
+        ),
+      );
+    }
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeColor = AppTheme.getRoleColor(_role);
@@ -100,94 +134,126 @@ class _EditProfilePageState extends State<EditProfilePage> {
       data: AppTheme.getTheme(_role),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Edit Profile'),
           backgroundColor: themeColor,
+          title: const Text('FixUp Pro'),
+          centerTitle: true,
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: ListView(
-                    children: [
-                      Center(
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.grey[300],
-                            backgroundImage:
-                                _imageFile != null ? FileImage(_imageFile!) : null,
-                            child: _imageFile == null
-                                ? const Icon(Icons.camera_alt, size: 40)
-                                : null,
-                          ),
-                        ),
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Edit Profile',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(labelText: 'Name'),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Please enter name' : null,
-                      ),
-                      TextFormField(
-                        controller: _phoneController,
-                        decoration:
-                            const InputDecoration(labelText: 'Phone Number'),
-                        keyboardType: TextInputType.phone,
-                        validator: (value) => value!.isEmpty
-                            ? 'Please enter phone number'
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage:
+                            _imageFile != null ? FileImage(_imageFile!) : null,
+                        child: _imageFile == null
+                            ? const Icon(Icons.camera_alt, size: 40)
                             : null,
                       ),
-                      TextFormField(
-                        controller: _icController,
-                        decoration:
-                            const InputDecoration(labelText: 'IC Number'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                            value!.isEmpty ? 'Please enter IC number' : null,
-                      ),
-                      TextFormField(
-                        controller: _addressController,
-                        decoration:
-                            const InputDecoration(labelText: 'Address'),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Please enter address' : null,
-                      ),
-                      const SizedBox(height: 10),
-                      const Text('Gender'),
-                      Row(
+                    ),
+                    const SizedBox(height: 20),
+                    Form(
+                      key: _formKey,
+                      child: Column(
                         children: [
-                          Radio<String>(
-                            value: 'Male',
-                            groupValue: _gender,
-                            onChanged: (value) =>
-                                setState(() => _gender = value!),
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(labelText: 'Name'),
+                            validator: (value) =>
+                                value!.isEmpty ? 'Please enter name' : null,
                           ),
-                          const Text('Male'),
-                          Radio<String>(
-                            value: 'Female',
-                            groupValue: _gender,
-                            onChanged: (value) =>
-                                setState(() => _gender = value!),
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: const InputDecoration(
+                                labelText: 'Phone Number'),
+                            keyboardType: TextInputType.phone,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter phone number'
+                                : null,
                           ),
-                          const Text('Female'),
+                          TextFormField(
+                            controller: _icController,
+                            decoration: const InputDecoration(
+                                labelText: 'IC Number'),
+                            keyboardType: TextInputType.number,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter IC number'
+                                : null,
+                          ),
+                          TextFormField(
+                            controller: _addressController,
+                            decoration:
+                                const InputDecoration(labelText: 'Address'),
+                            validator: (value) =>
+                                value!.isEmpty ? 'Please enter address' : null,
+                          ),
+                          const SizedBox(height: 10),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text('Gender'),
+                          ),
+                          Row(
+                            children: [
+                              Radio<String>(
+                                value: 'Male',
+                                groupValue: _gender,
+                                onChanged: (value) =>
+                                    setState(() => _gender = value!),
+                              ),
+                              const Text('Male'),
+                              Radio<String>(
+                                value: 'Female',
+                                groupValue: _gender,
+                                onChanged: (value) =>
+                                    setState(() => _gender = value!),
+                              ),
+                              const Text('Female'),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _saveProfile,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: themeColor,
+                            ),
+                            child: const Text('Save Profile'),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: themeColor,
-                        ),
-                        child: const Text('Save Profile'),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.work), label: 'Schedule'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.inventory), label: 'Inventory'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.payment), label: 'Payments'),
+            BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rating'),
+          ],
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          elevation: 8,
+        ),
       ),
     );
   }
